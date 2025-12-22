@@ -22,7 +22,6 @@
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
-            touch-action: none; 
         }
 
         body {
@@ -31,10 +30,11 @@
             font-family: 'Fredoka One', cursive;
             background-color: var(--bg-color);
             color: var(--text-color);
-            overflow: hidden;
+            /* Ajuste de scroll: permitir rolagem se o conteúdo for maior que a tela */
+            overflow-y: auto;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            height: 100vh;
         }
 
         header {
@@ -52,6 +52,8 @@
             gap: 15px;
             align-items: center;
             justify-content: center;
+            /* Espaço extra no fundo para o botão de próximo não cobrir nada */
+            padding-bottom: 100px;
         }
 
         .card-side {
@@ -65,13 +67,13 @@
             justify-content: center;
             box-shadow: 10px 10px 0px var(--secondary-color);
             border: 4px solid var(--text-color);
-            height: 85%;
+            min-height: 350px;
             max-width: 45%;
         }
 
         .animal-img {
             max-width: 90%;
-            max-height: 75%;
+            max-height: 250px;
             object-fit: contain;
             margin-bottom: 20px;
             border-radius: 20px;
@@ -83,7 +85,6 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 85%;
             position: relative;
         }
 
@@ -96,6 +97,8 @@
             cursor: crosshair;
             overflow: hidden;
             transition: all 0.3s ease;
+            /* Garante que o toque para desenhar não role a página */
+            touch-action: none; 
         }
 
         #letter-canvas {
@@ -112,15 +115,17 @@
         }
 
         .controls {
-            margin-top: 15px;
+            margin-top: 20px;
             display: flex;
             gap: 15px;
             min-height: 60px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .btn {
             border: none;
-            padding: 12px 25px;
+            padding: 15px 30px;
             border-radius: 50px;
             font-family: 'Fredoka One', cursive;
             font-size: 1.3rem;
@@ -149,8 +154,8 @@
             background-color: var(--success-color); 
             color: white;
             position: fixed;
-            bottom: 30px;
-            right: 30px;
+            bottom: 20px;
+            right: 20px;
             padding: 20px 40px;
             font-size: 2rem;
             display: none; 
@@ -189,10 +194,20 @@
         .pop-in { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-        @media (max-width: 768px) {
-            .game-container { flex-direction: column; }
-            .card-side, .drawing-side { max-width: 95%; width: 100%; height: auto; }
-            #canvas-container { width: 300px; height: 380px; }
+        @media (max-width: 850px) {
+            .game-container { 
+                flex-direction: column; 
+                padding-bottom: 120px; /* Mais espaço para o botão fixo */
+            }
+            .card-side, .drawing-side { 
+                max-width: 95%; 
+                width: 100%; 
+                height: auto; 
+            }
+            #canvas-container { 
+                width: 320px; 
+                height: 400px; 
+            }
         }
     </style>
 </head>
@@ -251,7 +266,6 @@
             { l: 'Y', name: 'Yakult' }, { l: 'Z', name: 'Zebra' }
         ];
 
-        // Objeto para armazenar imagens pré-carregadas
         const preloadedImages = {};
         let currentIndex = 0;
         let attemptCount = 0;
@@ -271,7 +285,6 @@
         
         const canvasSize = { w: 400, h: 500 };
 
-        // Inicia o pré-carregamento de todas as imagens imediatamente
         function preloadAll() {
             alphabet.forEach(item => {
                 const img = new Image();
@@ -288,6 +301,7 @@
         });
 
         function initCanvas() {
+            // No mobile, ajustamos o tamanho visual do canvas se necessário
             canvas.width = canvasSize.w;
             canvas.height = canvasSize.h;
             refCanvas.width = canvasSize.w;
@@ -335,18 +349,11 @@
 
         function loadLetter(index) {
             const item = alphabet[index];
-            const nextBtn = document.getElementById('next-btn');
-            const checkBtn = document.getElementById('check-btn');
-            const retryBtn = document.getElementById('retry-btn');
-            const skipBtn = document.getElementById('skip-btn');
-            const overlay = document.getElementById('congrats-overlay');
-            const imgElement = document.getElementById('animal-image');
-            
-            nextBtn.style.display = 'none';
-            checkBtn.style.display = 'none';
-            retryBtn.style.display = 'none';
-            skipBtn.style.display = 'none';
-            overlay.style.display = 'none';
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('check-btn').style.display = 'none';
+            document.getElementById('retry-btn').style.display = 'none';
+            document.getElementById('skip-btn').style.display = 'none';
+            document.getElementById('congrats-overlay').style.display = 'none';
             
             isCompleted = false;
             hasStartedDrawing = false;
@@ -357,13 +364,12 @@
             void card.offsetWidth; 
             card.style.animation = 'pop 0.4s forwards';
 
-            // Carregamento instantâneo se já estiver no cache
             const preImg = preloadedImages[item.l];
             if (preImg && preImg.complete) {
-                imgElement.src = preImg.src;
+                document.getElementById('animal-image').src = preImg.src;
             } else {
                 const imgName = `${item.l.toLowerCase()}_${item.name}.jpg`;
-                imgElement.src = `https://marciasiri.github.io/leitura_Gabriel/${imgName}`;
+                document.getElementById('animal-image').src = `https://marciasiri.github.io/leitura_Gabriel/${imgName}`;
             }
 
             renderLetterTemplate();
@@ -372,9 +378,7 @@
 
         function speakCurrent() {
             const item = alphabet[currentIndex];
-            // Primeiro fala a letra
             speak(item.l, () => {
-                // Pausa de 500ms entre a letra e a palavra
                 setTimeout(() => {
                     speak(item.name);
                 }, 500);
@@ -394,10 +398,7 @@
             ) || voices.find(v => v.lang.includes('pt-BR'));
 
             if (feminineVoice) utterance.voice = feminineVoice;
-            
-            if (callback) {
-                utterance.onend = callback;
-            }
+            if (callback) utterance.onend = callback;
             
             window.speechSynthesis.speak(utterance);
         }
@@ -446,7 +447,6 @@
 
         function manualCheck() {
             if (isCompleted) return;
-            
             const percentage = (visitedBlocks.size / targetBlocks.length) * 100;
             
             if (percentage >= 65) {
@@ -454,7 +454,6 @@
             } else {
                 attemptCount++;
                 speak("Quase, Gabriel! Tente novamente!");
-                
                 canvasContainer.classList.add('blink-error');
                 setTimeout(() => {
                     canvasContainer.classList.remove('blink-error');
@@ -493,7 +492,6 @@
                 document.body.appendChild(star);
                 setTimeout(() => star.remove(), 2500);
             }
-            
             speak("Muito bem! Você conseguiu!");
         }
 
@@ -501,8 +499,11 @@
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            // Cálculo de escala para garantir que o desenho siga o dedo mesmo se o canvas mudar de tamanho visual
             const scaleX = canvas.width / rect.width;
             const scaleY = canvas.height / rect.height;
+            
             return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
         }
 
