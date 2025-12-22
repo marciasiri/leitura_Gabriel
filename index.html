@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alfabeto do Gabriel</title>
+    <!-- Fontes e Ícones -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #FF6B6B;
+            --secondary-color: #4ECDC4;
+            --accent-color: #FFE66D;
+            --success-color: #58D68D;
+            --skip-color: #AAB7B8;
+            --text-color: #2F2F2F;
+            --bg-color: #F7FFF7;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            touch-action: none; 
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Fredoka One', cursive;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            padding: 10px;
+            text-align: center;
+            background-color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .game-container {
+            display: flex;
+            flex: 1;
+            padding: 15px;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-side {
+            flex: 1;
+            background: white;
+            border-radius: 30px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 10px 10px 0px var(--secondary-color);
+            border: 4px solid var(--text-color);
+            height: 85%;
+            max-width: 45%;
+        }
+
+        .animal-img {
+            max-width: 90%;
+            max-height: 75%;
+            object-fit: contain;
+            margin-bottom: 20px;
+            border-radius: 20px;
+        }
+
+        .drawing-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 85%;
+            position: relative;
+        }
+
+        #canvas-container {
+            position: relative;
+            background: white;
+            border-radius: 30px;
+            border: 6px dashed var(--primary-color);
+            box-shadow: 10px 10px 0px var(--accent-color);
+            cursor: crosshair;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        #letter-canvas {
+            display: block;
+        }
+
+        @keyframes blink-red {
+            0% { border-color: var(--primary-color); background-color: white; }
+            50% { border-color: #e74c3c; background-color: #fadbd8; transform: scale(1.02); }
+            100% { border-color: var(--primary-color); background-color: white; }
+        }
+        .blink-error {
+            animation: blink-red 0.3s ease-in-out 3;
+        }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 15px;
+            min-height: 60px;
+        }
+
+        .btn {
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.15);
+        }
+
+        .btn i {
+            font-size: 1.5rem;
+        }
+
+        .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.15); }
+        .btn-audio { background-color: var(--secondary-color); color: white; }
+        
+        .btn-retry, .btn-check, .btn-skip { display: none; }
+        
+        .btn-retry { background-color: var(--primary-color); color: white; }
+        .btn-check { background-color: var(--success-color); color: white; }
+        .btn-skip { background-color: var(--skip-color); color: white; }
+        
+        .btn-next { 
+            background-color: var(--success-color); 
+            color: white;
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 20px 40px;
+            font-size: 2rem;
+            display: none; 
+            z-index: 100;
+        }
+
+        #congrats-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.92);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 30px;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .star-icon { font-size: 8rem; color: var(--accent-color); filter: drop-shadow(0 0 10px orange); }
+
+        .confetti-star {
+            position: absolute;
+            font-size: 2rem;
+            pointer-events: none;
+            z-index: 60;
+            animation: fall linear forwards;
+        }
+
+        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-25px); } }
+        .bounce { animation: bounce 0.6s infinite ease-in-out; }
+        .pop-in { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        @media (max-width: 768px) {
+            .game-container { flex-direction: column; }
+            .card-side, .drawing-side { max-width: 95%; width: 100%; height: auto; }
+            #canvas-container { width: 300px; height: 380px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 style="margin:0; font-size: 1.5rem;">Alfabeto do Gabriel</h1>
+    </header>
+
+    <div class="game-container">
+        <div class="card-side pop-in" id="card-side">
+            <img src="" alt="" id="animal-image" class="animal-img">
+            <button class="btn btn-audio" onclick="speakCurrent()">
+                <i class="fas fa-volume-high"></i> Ouvir
+            </button>
+        </div>
+
+        <div class="drawing-side">
+            <div id="canvas-container">
+                <canvas id="letter-canvas"></canvas>
+                <div id="congrats-overlay">
+                    <div class="star-icon bounce">⭐</div>
+                    <h2 style="font-size: 2.5rem; color: var(--success-color); margin: 15px 0;">MUITO BEM!</h2>
+                </div>
+            </div>
+            <div class="controls">
+                <button id="retry-btn" class="btn btn-retry" onclick="resetCanvas()">
+                    <i class="fas fa-eraser"></i> Limpar
+                </button>
+                <button id="check-btn" class="btn btn-check" onclick="manualCheck()">
+                    <i class="fas fa-check-circle"></i> Conferir
+                </button>
+                <button id="skip-btn" class="btn btn-skip" onclick="skipLetter()">
+                    <i class="fas fa-forward"></i> Pular
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <button id="next-btn" class="btn btn-next pop-in" onclick="nextLetter()">
+        Próximo <i class="fas fa-arrow-right"></i>
+    </button>
+
+    <canvas id="ref-canvas" style="display:none;"></canvas>
+
+    <script>
+        let alphabet = [
+            { l: 'A', name: 'Abelha' }, { l: 'B', name: 'Bola' }, { l: 'C', name: 'Casa' },
+            { l: 'D', name: 'Dado' }, { l: 'E', name: 'Elefante' }, { l: 'F', name: 'Faca' },
+            { l: 'G', name: 'Gato' }, { l: 'H', name: 'Helicoptero' }, { l: 'I', name: 'Igreja' },
+            { l: 'J', name: 'Jacare' }, { l: 'K', name: 'Kiwi' }, { l: 'L', name: 'Lapis' },
+            { l: 'M', name: 'Macaco' }, { l: 'N', name: 'Navio' }, { l: 'O', name: 'Ovelha' },
+            { l: 'P', name: 'Pato' }, { l: 'Q', name: 'Queijo' }, { l: 'R', name: 'Rato' },
+            { l: 'S', name: 'Sapo' }, { l: 'T', name: 'Tesoura' }, { l: 'U', name: 'Uva' },
+            { l: 'V', name: 'Vaca' }, { l: 'W', name: 'Walter' }, { l: 'X', name: 'Xicara' },
+            { l: 'Y', name: 'Yakult' }, { l: 'Z', name: 'Zebra' }
+        ];
+
+        // Objeto para armazenar imagens pré-carregadas
+        const preloadedImages = {};
+        let currentIndex = 0;
+        let attemptCount = 0;
+        const canvas = document.getElementById('letter-canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const refCanvas = document.getElementById('ref-canvas');
+        const refCtx = refCanvas.getContext('2d', { willReadFrequently: true });
+        const canvasContainer = document.getElementById('canvas-container');
+        
+        let isDrawing = false;
+        let isCompleted = false;
+        let hasStartedDrawing = false;
+        
+        const gridSize = 15; 
+        let targetBlocks = []; 
+        let visitedBlocks = new Set(); 
+        
+        const canvasSize = { w: 400, h: 500 };
+
+        // Inicia o pré-carregamento de todas as imagens imediatamente
+        function preloadAll() {
+            alphabet.forEach(item => {
+                const img = new Image();
+                const imgName = `${item.l.toLowerCase()}_${item.name}.jpg`;
+                img.src = `https://marciasiri.github.io/leitura_Gabriel/${imgName}`;
+                preloadedImages[item.l] = img;
+            });
+        }
+
+        document.fonts.ready.then(() => {
+            preloadAll();
+            initCanvas();
+            loadLetter(0);
+        });
+
+        function initCanvas() {
+            canvas.width = canvasSize.w;
+            canvas.height = canvasSize.h;
+            refCanvas.width = canvasSize.w;
+            refCanvas.height = canvasSize.h;
+        }
+
+        function renderLetterTemplate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            refCtx.clearRect(0, 0, refCanvas.width, refCanvas.height);
+            visitedBlocks.clear();
+            targetBlocks = [];
+            
+            const letter = alphabet[currentIndex].l;
+            const fontStyle = "bold 420px 'Fredoka One', sans-serif";
+            
+            ctx.font = fontStyle;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.strokeStyle = "#F0F0F0";
+            ctx.setLineDash([15, 15]);
+            ctx.lineWidth = 6;
+            ctx.strokeText(letter, canvas.width / 2, canvas.height / 2 + 30);
+            ctx.setLineDash([]);
+
+            refCtx.font = fontStyle;
+            refCtx.textAlign = "center";
+            refCtx.textBaseline = "middle";
+            refCtx.fillStyle = "black";
+            refCtx.fillText(letter, refCanvas.width / 2, refCanvas.height / 2 + 30);
+
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                for (let x = 0; x < canvas.width; x += gridSize) {
+                    const imgData = refCtx.getImageData(x, y, gridSize, gridSize);
+                    let hasContent = false;
+                    for (let i = 0; i < imgData.data.length; i += 4) {
+                        if (imgData.data[i + 3] > 50) {
+                            hasContent = true;
+                            break;
+                        }
+                    }
+                    if (hasContent) targetBlocks.push({ x, y });
+                }
+            }
+        }
+
+        function loadLetter(index) {
+            const item = alphabet[index];
+            const nextBtn = document.getElementById('next-btn');
+            const checkBtn = document.getElementById('check-btn');
+            const retryBtn = document.getElementById('retry-btn');
+            const skipBtn = document.getElementById('skip-btn');
+            const overlay = document.getElementById('congrats-overlay');
+            const imgElement = document.getElementById('animal-image');
+            
+            nextBtn.style.display = 'none';
+            checkBtn.style.display = 'none';
+            retryBtn.style.display = 'none';
+            skipBtn.style.display = 'none';
+            overlay.style.display = 'none';
+            
+            isCompleted = false;
+            hasStartedDrawing = false;
+            attemptCount = 0;
+            
+            const card = document.getElementById('card-side');
+            card.style.animation = 'none';
+            void card.offsetWidth; 
+            card.style.animation = 'pop 0.4s forwards';
+
+            // Carregamento instantâneo se já estiver no cache
+            const preImg = preloadedImages[item.l];
+            if (preImg && preImg.complete) {
+                imgElement.src = preImg.src;
+            } else {
+                const imgName = `${item.l.toLowerCase()}_${item.name}.jpg`;
+                imgElement.src = `https://marciasiri.github.io/leitura_Gabriel/${imgName}`;
+            }
+
+            renderLetterTemplate();
+            setTimeout(() => speakCurrent(), 400);
+        }
+
+        function speakCurrent() {
+            const item = alphabet[currentIndex];
+            // Primeiro fala a letra
+            speak(item.l, () => {
+                // Pausa de 500ms entre a letra e a palavra
+                setTimeout(() => {
+                    speak(item.name);
+                }, 500);
+            });
+        }
+
+        function speak(text, callback) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'pt-BR';
+            utterance.rate = 1.4; 
+
+            const voices = window.speechSynthesis.getVoices();
+            const feminineVoice = voices.find(v => 
+                v.lang.includes('pt-BR') && 
+                (v.name.includes('Maria') || v.name.includes('Luciana') || v.name.includes('Victoria') || v.name.includes('Google') || v.name.includes('Female'))
+            ) || voices.find(v => v.lang.includes('pt-BR'));
+
+            if (feminineVoice) utterance.voice = feminineVoice;
+            
+            if (callback) {
+                utterance.onend = callback;
+            }
+            
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function startDrawing(e) {
+            if (isCompleted) return;
+            isDrawing = true;
+            
+            if (!hasStartedDrawing) {
+                hasStartedDrawing = true;
+                document.getElementById('check-btn').style.display = 'flex';
+                document.getElementById('retry-btn').style.display = 'flex';
+                if(attemptCount >= 2) document.getElementById('skip-btn').style.display = 'flex';
+            }
+
+            ctx.beginPath();
+            const pos = getMousePos(e);
+            ctx.moveTo(pos.x, pos.y);
+            markBlocks(pos.x, pos.y);
+        }
+
+        function draw(e) {
+            if (!isDrawing || isCompleted) return;
+            const pos = getMousePos(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.strokeStyle = "#FF6B6B";
+            ctx.lineWidth = 45; 
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.stroke();
+            markBlocks(pos.x, pos.y);
+        }
+
+        function markBlocks(x, y) {
+            targetBlocks.forEach((block, index) => {
+                if (!visitedBlocks.has(index)) {
+                    const dist = Math.hypot(x - (block.x + gridSize/2), y - (block.y + gridSize/2));
+                    if (dist < 35) visitedBlocks.add(index);
+                }
+            });
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function manualCheck() {
+            if (isCompleted) return;
+            
+            const percentage = (visitedBlocks.size / targetBlocks.length) * 100;
+            
+            if (percentage >= 65) {
+                showSuccess();
+            } else {
+                attemptCount++;
+                speak("Quase, Gabriel! Tente novamente!");
+                
+                canvasContainer.classList.add('blink-error');
+                setTimeout(() => {
+                    canvasContainer.classList.remove('blink-error');
+                    resetCanvas(); 
+                }, 1000);
+
+                if (attemptCount >= 2) {
+                    document.getElementById('skip-btn').style.display = 'flex';
+                }
+            }
+        }
+
+        function skipLetter() {
+            const itemToSkip = alphabet.splice(currentIndex, 1)[0];
+            alphabet.push(itemToSkip);
+            if (currentIndex >= alphabet.length) currentIndex = 0;
+            loadLetter(currentIndex);
+            speak("Tudo bem! Vamos ver essa depois.");
+        }
+
+        function showSuccess() {
+            isCompleted = true;
+            document.getElementById('congrats-overlay').style.display = 'flex';
+            document.getElementById('next-btn').style.display = 'block';
+            document.getElementById('check-btn').style.display = 'none';
+            document.getElementById('retry-btn').style.display = 'none';
+            document.getElementById('skip-btn').style.display = 'none';
+            
+            for (let i = 0; i < 25; i++) {
+                const star = document.createElement('div');
+                star.className = 'confetti-star';
+                star.innerHTML = '⭐';
+                star.style.left = Math.random() * 100 + 'vw';
+                star.style.top = '-50px';
+                star.style.animationDuration = (Math.random() * 1.5 + 1) + 's';
+                document.body.appendChild(star);
+                setTimeout(() => star.remove(), 2500);
+            }
+            
+            speak("Muito bem! Você conseguiu!");
+        }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+        }
+
+        function resetCanvas() {
+            renderLetterTemplate();
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('check-btn').style.display = 'none';
+            document.getElementById('retry-btn').style.display = 'none';
+            document.getElementById('skip-btn').style.display = 'none';
+            document.getElementById('congrats-overlay').style.display = 'none';
+            isCompleted = false;
+            hasStartedDrawing = false;
+        }
+
+        function nextLetter() {
+            currentIndex++;
+            if (currentIndex < alphabet.length) {
+                loadLetter(currentIndex);
+            } else {
+                speak("Incrível! Você completou todas as letras!");
+                currentIndex = 0;
+                loadLetter(currentIndex);
+            }
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, {passive: false});
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive: false});
+        canvas.addEventListener('touchend', stopDrawing);
+
+        window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+    </script>
+</body>
+</html>
