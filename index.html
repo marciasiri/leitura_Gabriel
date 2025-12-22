@@ -65,13 +65,13 @@
             justify-content: center;
             box-shadow: 10px 10px 0px var(--secondary-color);
             border: 4px solid var(--text-color);
-            min-height: 350px;
+            min-height: 300px;
             max-width: 45%;
         }
 
         .animal-img {
             max-width: 90%;
-            max-height: 250px;
+            max-height: 220px;
             object-fit: contain;
             margin-bottom: 20px;
             border-radius: 20px;
@@ -102,7 +102,7 @@
             align-items: center;
             justify-content: center;
             width: 400px; 
-            height: 500px; 
+            height: 400px;
         }
 
         #letter-canvas {
@@ -120,41 +120,58 @@
             animation: blink-red 0.3s ease-in-out 3;
         }
 
+        @keyframes pulse-check {
+            0% { transform: scale(1); box-shadow: 0 5px 0 rgba(0,0,0,0.15); }
+            50% { transform: scale(1.1); box-shadow: 0 0 15px var(--success-color); }
+            100% { transform: scale(1); box-shadow: 0 5px 0 rgba(0,0,0,0.15); }
+        }
+
         .controls {
             margin-top: 20px;
             display: flex;
-            gap: 15px;
-            min-height: 60px;
-            flex-wrap: wrap;
+            gap: 25px;
+            min-height: 80px;
+            align-items: center;
             justify-content: center;
             width: 100%;
         }
 
         .btn {
             border: none;
-            padding: 15px 30px;
-            border-radius: 50px;
-            font-family: 'Fredoka One', cursive;
-            font-size: 1.3rem;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            padding: 0;
+            font-size: 1.5rem;
             cursor: pointer;
             transition: transform 0.2s;
             display: flex;
             align-items: center;
-            gap: 12px;
+            justify-content: center;
             box-shadow: 0 5px 0 rgba(0,0,0,0.15);
         }
 
-        .btn i {
-            font-size: 1.5rem;
-        }
-
         .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.15); }
-        .btn-audio { background-color: var(--secondary-color); color: white; }
+        
+        .btn-audio { 
+            background-color: var(--secondary-color); 
+            color: white;
+            border-radius: 50px;
+            width: auto;
+            padding: 10px 25px;
+            height: auto;
+        }
         
         .btn-retry, .btn-check, .btn-skip { display: none; }
-        
         .btn-retry { background-color: var(--primary-color); color: white; }
-        .btn-check { background-color: var(--success-color); color: white; }
+        .btn-check { 
+            background-color: var(--success-color); 
+            color: white;
+            width: 80px;
+            height: 80px;
+            font-size: 2.2rem;
+            animation: pulse-check 2s infinite ease-in-out;
+        }
         .btn-skip { background-color: var(--skip-color); color: white; }
         
         .btn-next { 
@@ -167,6 +184,9 @@
             font-size: 2rem;
             display: none; 
             z-index: 100;
+            border-radius: 50px;
+            width: auto;
+            height: auto;
         }
 
         #congrats-overlay {
@@ -202,21 +222,9 @@
         @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
         @media (max-width: 850px) {
-            .game-container { 
-                flex-direction: column; 
-                padding-bottom: 120px; 
-            }
-            .card-side, .drawing-side { 
-                max-width: 95%; 
-                width: 100%; 
-                height: auto; 
-            }
-            #canvas-container { 
-                width: 90vw; 
-                height: calc(90vw * 1.25); 
-                max-width: 320px; 
-                max-height: 400px; 
-            }
+            .game-container { flex-direction: column; padding-bottom: 120px; }
+            .card-side, .drawing-side { max-width: 95%; width: 100%; height: auto; }
+            #canvas-container { width: 90vw; height: 90vw; max-width: 320px; max-height: 320px; }
         }
     </style>
 </head>
@@ -243,14 +251,14 @@
                 </div>
             </div>
             <div class="controls">
-                <button id="retry-btn" class="btn btn-retry" onclick="resetCanvas()">
-                    <i class="fas fa-eraser"></i> Limpar
+                <button id="retry-btn" class="btn btn-retry" title="Limpar" onclick="resetCanvas()">
+                    <i class="fas fa-eraser"></i>
                 </button>
-                <button id="check-btn" class="btn btn-check" onclick="manualCheck()">
-                    <i class="fas fa-check-circle"></i> Conferir
+                <button id="check-btn" class="btn btn-check" title="Conferir" onclick="manualCheck()">
+                    <i class="fas fa-check-circle"></i>
                 </button>
-                <button id="skip-btn" class="btn btn-skip" onclick="skipLetter()">
-                    <i class="fas fa-forward"></i> Pular
+                <button id="skip-btn" class="btn btn-skip" title="Pular" onclick="skipLetter()">
+                    <i class="fas fa-forward"></i>
                 </button>
             </div>
         </div>
@@ -263,15 +271,16 @@
     <canvas id="ref-canvas" style="display:none;"></canvas>
 
     <script>
+        // Lista completa com acentuação correta para a fala
         let alphabet = [
             { l: 'A', name: 'Abelha' }, { l: 'B', name: 'Bola' }, { l: 'C', name: 'Casa' },
             { l: 'D', name: 'Dado' }, { l: 'E', name: 'Elefante' }, { l: 'F', name: 'Faca' },
-            { l: 'G', name: 'Gato' }, { l: 'H', name: 'Helicoptero' }, { l: 'I', name: 'Igreja' },
-            { l: 'J', name: 'Jacare' }, { l: 'K', name: 'Kiwi' }, { l: 'L', name: 'Lapis' },
+            { l: 'G', name: 'Gato' }, { l: 'H', name: 'Helicóptero' }, { l: 'I', name: 'Igreja' },
+            { l: 'J', name: 'Jacaré' }, { l: 'K', name: 'Kiwi' }, { l: 'L', name: 'Lápis' },
             { l: 'M', name: 'Macaco' }, { l: 'N', name: 'Navio' }, { l: 'O', name: 'Ovelha' },
             { l: 'P', name: 'Pato' }, { l: 'Q', name: 'Queijo' }, { l: 'R', name: 'Rato' },
             { l: 'S', name: 'Sapo' }, { l: 'T', name: 'Tesoura' }, { l: 'U', name: 'Uva' },
-            { l: 'V', name: 'Vaca' }, { l: 'W', name: 'Walter' }, { l: 'X', name: 'Xicara' },
+            { l: 'V', name: 'Vaca' }, { l: 'W', name: 'Walter' }, { l: 'X', name: 'Xícara' },
             { l: 'Y', name: 'Yakult' }, { l: 'Z', name: 'Zebra' }
         ];
 
@@ -292,12 +301,18 @@
         let targetBlocks = []; 
         let visitedBlocks = new Set(); 
         
-        const canvasSize = { w: 400, h: 500 };
+        const canvasSize = { w: 400, h: 400 }; 
+
+        // Função auxiliar para remover acentos na hora de buscar o arquivo de imagem
+        function removeAccents(str) {
+            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
 
         function preloadAll() {
             alphabet.forEach(item => {
                 const img = new Image();
-                const imgName = `${item.l.toLowerCase()}_${item.name}.jpg`;
+                // O nome do arquivo no servidor está sem acento (ex: h_Helicoptero.jpg)
+                const imgName = `${item.l.toLowerCase()}_${removeAccents(item.name)}.jpg`;
                 img.src = `https://marciasiri.github.io/leitura_Gabriel/${imgName}`;
                 preloadedImages[item.l] = img;
             });
@@ -323,8 +338,7 @@
             targetBlocks = [];
             
             const letter = alphabet[currentIndex].l;
-            // Reduzido para 320px para garantir que caiba em 400px de largura
-            const fontStyle = "bold 320px 'Fredoka One', sans-serif";
+            const fontStyle = "bold 300px 'Fredoka One', sans-serif";
             
             ctx.font = fontStyle;
             ctx.textAlign = "center";
@@ -377,7 +391,7 @@
             if (preImg && preImg.complete) {
                 document.getElementById('animal-image').src = preImg.src;
             } else {
-                const imgName = `${item.l.toLowerCase()}_${item.name}.jpg`;
+                const imgName = `${item.l.toLowerCase()}_${removeAccents(item.name)}.jpg`;
                 document.getElementById('animal-image').src = `https://marciasiri.github.io/leitura_Gabriel/${imgName}`;
             }
 
@@ -464,10 +478,6 @@
                 attemptCount++;
                 speak("Quase, Gabriel! Tente novamente!");
                 canvasContainer.classList.add('blink-error');
-
-                if (attemptCount >= 2) {
-                    document.getElementById('skip-btn').style.display = 'flex';
-                }
 
                 setTimeout(() => {
                     canvasContainer.classList.remove('blink-error');
