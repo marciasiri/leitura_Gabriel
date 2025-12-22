@@ -30,7 +30,6 @@
             font-family: 'Fredoka One', cursive;
             background-color: var(--bg-color);
             color: var(--text-color);
-            /* Ajuste de scroll: permitir rolagem se o conteúdo for maior que a tela */
             overflow-y: auto;
             min-height: 100vh;
             display: flex;
@@ -52,7 +51,6 @@
             gap: 15px;
             align-items: center;
             justify-content: center;
-            /* Espaço extra no fundo para o botão de próximo não cobrir nada */
             padding-bottom: 100px;
         }
 
@@ -86,6 +84,7 @@
             align-items: center;
             justify-content: center;
             position: relative;
+            width: 100%;
         }
 
         #canvas-container {
@@ -97,12 +96,19 @@
             cursor: crosshair;
             overflow: hidden;
             transition: all 0.3s ease;
-            /* Garante que o toque para desenhar não role a página */
             touch-action: none; 
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 400px; 
+            height: 500px; 
         }
 
         #letter-canvas {
             display: block;
+            width: 100%;
+            height: 100%;
         }
 
         @keyframes blink-red {
@@ -121,6 +127,7 @@
             min-height: 60px;
             flex-wrap: wrap;
             justify-content: center;
+            width: 100%;
         }
 
         .btn {
@@ -197,7 +204,7 @@
         @media (max-width: 850px) {
             .game-container { 
                 flex-direction: column; 
-                padding-bottom: 120px; /* Mais espaço para o botão fixo */
+                padding-bottom: 120px; 
             }
             .card-side, .drawing-side { 
                 max-width: 95%; 
@@ -205,8 +212,10 @@
                 height: auto; 
             }
             #canvas-container { 
-                width: 320px; 
-                height: 400px; 
+                width: 90vw; 
+                height: calc(90vw * 1.25); 
+                max-width: 320px; 
+                max-height: 400px; 
             }
         }
     </style>
@@ -301,7 +310,6 @@
         });
 
         function initCanvas() {
-            // No mobile, ajustamos o tamanho visual do canvas se necessário
             canvas.width = canvasSize.w;
             canvas.height = canvasSize.h;
             refCanvas.width = canvasSize.w;
@@ -315,7 +323,8 @@
             targetBlocks = [];
             
             const letter = alphabet[currentIndex].l;
-            const fontStyle = "bold 420px 'Fredoka One', sans-serif";
+            // Reduzido para 320px para garantir que caiba em 400px de largura
+            const fontStyle = "bold 320px 'Fredoka One', sans-serif";
             
             ctx.font = fontStyle;
             ctx.textAlign = "center";
@@ -323,14 +332,14 @@
             ctx.strokeStyle = "#F0F0F0";
             ctx.setLineDash([15, 15]);
             ctx.lineWidth = 6;
-            ctx.strokeText(letter, canvas.width / 2, canvas.height / 2 + 30);
+            ctx.strokeText(letter, canvas.width / 2, canvas.height / 2);
             ctx.setLineDash([]);
 
             refCtx.font = fontStyle;
             refCtx.textAlign = "center";
             refCtx.textBaseline = "middle";
             refCtx.fillStyle = "black";
-            refCtx.fillText(letter, refCanvas.width / 2, refCanvas.height / 2 + 30);
+            refCtx.fillText(letter, refCanvas.width / 2, refCanvas.height / 2);
 
             for (let y = 0; y < canvas.height; y += gridSize) {
                 for (let x = 0; x < canvas.width; x += gridSize) {
@@ -455,14 +464,15 @@
                 attemptCount++;
                 speak("Quase, Gabriel! Tente novamente!");
                 canvasContainer.classList.add('blink-error');
-                setTimeout(() => {
-                    canvasContainer.classList.remove('blink-error');
-                    resetCanvas(); 
-                }, 1000);
 
                 if (attemptCount >= 2) {
                     document.getElementById('skip-btn').style.display = 'flex';
                 }
+
+                setTimeout(() => {
+                    canvasContainer.classList.remove('blink-error');
+                    resetCanvas(); 
+                }, 1000);
             }
         }
 
@@ -499,11 +509,8 @@
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            
-            // Cálculo de escala para garantir que o desenho siga o dedo mesmo se o canvas mudar de tamanho visual
             const scaleX = canvas.width / rect.width;
             const scaleY = canvas.height / rect.height;
-            
             return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
         }
 
@@ -512,7 +519,13 @@
             document.getElementById('next-btn').style.display = 'none';
             document.getElementById('check-btn').style.display = 'none';
             document.getElementById('retry-btn').style.display = 'none';
-            document.getElementById('skip-btn').style.display = 'none';
+            
+            if (attemptCount < 2) {
+                document.getElementById('skip-btn').style.display = 'none';
+            } else {
+                document.getElementById('skip-btn').style.display = 'flex';
+            }
+            
             document.getElementById('congrats-overlay').style.display = 'none';
             isCompleted = false;
             hasStartedDrawing = false;
