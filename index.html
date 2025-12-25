@@ -302,6 +302,11 @@
             console.warn("Firebase offline mode.");
         }
 
+        // --- DEFINIÇÃO DE CAMINHO DE IMAGEM ---
+        // Altere para './' se as imagens estiverem na mesma pasta do HTML
+        // Ou './images/' se estiverem em uma subpasta
+        const IMAGE_BASE_URL = './'; 
+
         // --- ESTADO DO JOGO ---
         let gameData = {
             level: 1,
@@ -367,7 +372,8 @@
             gameData.alphabet.forEach(item => {
                 const img = new Image();
                 const imgName = `${item.l.toLowerCase()}_${removeAccents(item.name)}.jpg`;
-                img.src = `https://marciasiri.github.io/leitura_Gabriel/${imgName}`;
+                // Usando caminho relativo para suporte offline
+                img.src = `${IMAGE_BASE_URL}${imgName}`;
                 preloadedImages[item.l] = img;
             });
         }
@@ -472,7 +478,8 @@
             document.getElementById('audio-central-msg').style.display = 'none';
             
             const preImg = preloadedImages[item.l];
-            document.getElementById('animal-image').src = (preImg && preImg.complete) ? preImg.src : `https://marciasiri.github.io/leitura_Gabriel/${item.l.toLowerCase()}_${removeAccents(item.name)}.jpg`;
+            // Fallback para caminho relativo
+            document.getElementById('animal-image').src = (preImg && preImg.complete) ? preImg.src : `${IMAGE_BASE_URL}${item.l.toLowerCase()}_${removeAccents(item.name)}.jpg`;
             
             renderLetterTemplate();
         }
@@ -785,11 +792,14 @@
         }
 
         async function init() {
+            // Inicializa componentes UI básicos primeiro
             initCanvas();
             preloadAll();
 
+            // Timer de segurança de 2.5 segundos para forçar a entrada mesmo sem Firebase
             const forceLoad = () => {
                 if (document.getElementById('loader').style.display !== 'none') {
+                    console.log("Forçando entrada (Modo Offline/GitHub).");
                     loadLetter(gameData.currentIndex);
                     document.getElementById('loader').style.display = 'none';
                 }
@@ -805,7 +815,10 @@
                     }
                     await loadProgress();
                 }
-            } catch (e) {} finally {
+            } catch (e) {
+                console.warn("Falha na autenticação:", e.message);
+            } finally {
+                // Event listeners de qualquer forma
                 canvas.addEventListener('mousedown', startDrawing);
                 canvas.addEventListener('mousemove', draw);
                 window.addEventListener('mouseup', () => isDrawing = false);
@@ -819,6 +832,7 @@
         }
 
         window.onload = init;
+        // Reinicializa vozes em navegadores Chrome/Mobile
         if (window.speechSynthesis) {
             window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
         }
