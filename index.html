@@ -288,19 +288,18 @@
         // --- CONFIGURAÇÃO FIREBASE PROTEGIDA ---
         let db, auth, appId = 'gabriel-alfabeto';
         try {
-            // Verifica se a variável de configuração existe e não é vazia antes de tentar parsear
-            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+            const hasFirebase = typeof firebase !== 'undefined';
+            const hasConfig = typeof __firebase_config !== 'undefined' && __firebase_config;
+
+            if (hasFirebase && hasConfig) {
                 const firebaseConfig = JSON.parse(__firebase_config);
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
                 auth = firebase.auth();
-                console.log("Firebase inicializado com sucesso.");
-            } else {
-                console.warn("Configuração do Firebase não encontrada. Iniciando em modo offline.");
             }
             if (typeof __app_id !== 'undefined') appId = __app_id;
         } catch (e) {
-            console.error("Erro ao configurar Firebase:", e);
+            console.warn("Firebase offline mode.");
         }
 
         // --- ESTADO DO JOGO ---
@@ -375,6 +374,7 @@
 
         function initCanvas() {
             canvas = document.getElementById('letter-canvas');
+            if (!canvas) return;
             ctx = canvas.getContext('2d', { willReadFrequently: true });
             refCanvas = document.getElementById('ref-canvas');
             refCtx = refCanvas.getContext('2d', { willReadFrequently: true });
@@ -743,15 +743,32 @@
             if (!isDrawing || isCompleted || [3, 6].includes(gameData.level)) return;
             const pos = getMousePos(e);
             ctx.lineTo(pos.x, pos.y);
+            
+            // Níveis 2 e 5: Borracha Branca | Níveis 1 e 4: Lápis Vermelho
             ctx.strokeStyle = ([2, 5].includes(gameData.level)) ? "white" : "#FF6B6B";
-            ctx.lineWidth = ([4, 5].includes(gameData.level)) ? 30 : 45; 
+            
+            // Lápis/Borracha
+            if (gameData.level === 4) {
+                ctx.lineWidth = 30; // Lápis fino para desenhar minúsculas
+            } else if (gameData.level === 5) {
+                ctx.lineWidth = 40; // Borracha mais grossa para apagar minúsculas
+            } else if (gameData.level === 2) {
+                ctx.lineWidth = 45; // Borracha original para maiúsculas
+            } else {
+                ctx.lineWidth = 45; // Lápis padrão
+            }
+            
             ctx.lineCap = "round"; ctx.lineJoin = "round";
             ctx.stroke();
             markBlocks(pos.x, pos.y);
         }
 
         function markBlocks(x, y) {
-            const threshold = ([4, 5].includes(gameData.level)) ? 25 : 35;
+            // Raio de colisão ajustado para acompanhar a espessura visual
+            let threshold = 35;
+            if (gameData.level === 4) threshold = 25;
+            if (gameData.level === 5) threshold = 30;
+
             targetBlocks.forEach((block, index) => {
                 if (!visitedBlocks.has(index)) {
                     const dist = Math.hypot(x - (block.x + gridSize/2), y - (block.y + gridSize/2));
@@ -768,34 +785,27 @@
         }
 
         async function init() {
-            console.log("Iniciando jogo...");
-            
-            // Inicia o Canvas imediatamente antes de qualquer await
             initCanvas();
             preloadAll();
 
-            // Timer de segurança: se o Firebase travar, o jogo inicia após 2 segundos
-            const safetyTimeout = setTimeout(() => {
+            const forceLoad = () => {
                 if (document.getElementById('loader').style.display !== 'none') {
-                    console.warn("Iniciando em modo emergência (offline).");
                     loadLetter(gameData.currentIndex);
                     document.getElementById('loader').style.display = 'none';
                 }
-            }, 2000);
+            };
+            const safetyTimeout = setTimeout(forceLoad, 2500);
 
             try {
-                if (auth) {
-                    console.log("Tentando autenticação...");
-                    // Verifica se existe o token de ambiente
+                if (typeof firebase !== 'undefined' && auth) {
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                         await auth.signInWithCustomToken(__initial_auth_token);
                     } else { 
                         await auth.signInAnonymously(); 
                     }
-                    console.log("Autenticado. Carregando progresso...");
                     await loadProgress();
                 }
-                
+            } catch (e) {} finally {
                 canvas.addEventListener('mousedown', startDrawing);
                 canvas.addEventListener('mousemove', draw);
                 window.addEventListener('mouseup', () => isDrawing = false);
@@ -804,19 +814,14 @@
                 canvas.addEventListener('touchend', () => isDrawing = false);
 
                 clearTimeout(safetyTimeout);
-                loadLetter(gameData.currentIndex);
-                document.getElementById('loader').style.display = 'none';
-                console.log("Jogo carregado e pronto.");
-            } catch (e) {
-                console.error("Falha no carregamento completo:", e);
-                clearTimeout(safetyTimeout);
-                loadLetter(gameData.currentIndex);
-                document.getElementById('loader').style.display = 'none';
+                forceLoad();
             }
         }
 
         window.onload = init;
-        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+        if (window.speechSynthesis) {
+            window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+        }
     </script>
 </body>
 </html>
