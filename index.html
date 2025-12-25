@@ -285,16 +285,22 @@
     <canvas id="ref-canvas" style="display:none;"></canvas>
 
     <script>
-        // --- CONFIGURAÇÃO FIREBASE ---
-        let db, auth, appId;
+        // --- CONFIGURAÇÃO FIREBASE PROTEGIDA ---
+        let db, auth, appId = 'gabriel-alfabeto';
         try {
-            const firebaseConfig = JSON.parse(__firebase_config);
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.firestore();
-            auth = firebase.auth();
-            appId = typeof __app_id !== 'undefined' ? __app_id : 'gabriel-alfabeto';
+            // Verifica se a variável de configuração existe e não é vazia antes de tentar parsear
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                auth = firebase.auth();
+                console.log("Firebase inicializado com sucesso.");
+            } else {
+                console.warn("Configuração do Firebase não encontrada. Iniciando em modo offline.");
+            }
+            if (typeof __app_id !== 'undefined') appId = __app_id;
         } catch (e) {
-            console.error("Erro na configuração do Firebase:", e);
+            console.error("Erro ao configurar Firebase:", e);
         }
 
         // --- ESTADO DO JOGO ---
@@ -328,7 +334,7 @@
 
         // --- PERSISTÊNCIA ---
         async function saveProgress() {
-            if (!auth || !auth.currentUser) return;
+            if (!db || !auth || !auth.currentUser) return;
             const user = auth.currentUser;
             try {
                 await db.doc(`artifacts/${appId}/users/${user.uid}/data/progress`).set({
@@ -341,7 +347,7 @@
         }
 
         async function loadProgress() {
-            if (!auth || !auth.currentUser) return;
+            if (!db || !auth || !auth.currentUser) return;
             const user = auth.currentUser;
             try {
                 const doc = await db.doc(`artifacts/${appId}/users/${user.uid}/data/progress`).get();
@@ -422,6 +428,8 @@
 
         function loadLetter(index) {
             const item = gameData.alphabet[index];
+            if (!item) return;
+
             document.getElementById('next-btn').style.display = 'none';
             document.getElementById('check-btn').style.display = 'none';
             document.getElementById('retry-btn').style.display = 'none';
@@ -760,28 +768,33 @@
         }
 
         async function init() {
-            // Timer de segurança: se o Firebase demorar mais de 4s, inicia o jogo offline
+            console.log("Iniciando jogo...");
+            
+            // Inicia o Canvas imediatamente antes de qualquer await
+            initCanvas();
+            preloadAll();
+
+            // Timer de segurança: se o Firebase travar, o jogo inicia após 2 segundos
             const safetyTimeout = setTimeout(() => {
                 if (document.getElementById('loader').style.display !== 'none') {
-                    console.warn("Firebase demorou demais. Iniciando modo offline.");
-                    initCanvas();
+                    console.warn("Iniciando em modo emergência (offline).");
                     loadLetter(gameData.currentIndex);
                     document.getElementById('loader').style.display = 'none';
                 }
-            }, 4000);
+            }, 2000);
 
             try {
                 if (auth) {
+                    console.log("Tentando autenticação...");
+                    // Verifica se existe o token de ambiente
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                         await auth.signInWithCustomToken(__initial_auth_token);
                     } else { 
                         await auth.signInAnonymously(); 
                     }
+                    console.log("Autenticado. Carregando progresso...");
                     await loadProgress();
                 }
-                
-                initCanvas();
-                preloadAll();
                 
                 canvas.addEventListener('mousedown', startDrawing);
                 canvas.addEventListener('mousemove', draw);
@@ -793,11 +806,10 @@
                 clearTimeout(safetyTimeout);
                 loadLetter(gameData.currentIndex);
                 document.getElementById('loader').style.display = 'none';
+                console.log("Jogo carregado e pronto.");
             } catch (e) {
-                console.error("Erro na inicialização:", e);
+                console.error("Falha no carregamento completo:", e);
                 clearTimeout(safetyTimeout);
-                // Inicia o jogo mesmo se o Firebase falhar
-                initCanvas();
                 loadLetter(gameData.currentIndex);
                 document.getElementById('loader').style.display = 'none';
             }
