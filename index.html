@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Alfabeto do Gabriel</title>
-    <!-- Fontes e Ícones -->
+    <!-- Fontes e Ícones (Fallback offline para Arial caso não haja internet) -->
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Firebase SDKs -->
@@ -33,11 +33,13 @@
 
         body {
             margin: 0; padding: 0;
-            font-family: 'Fredoka One', cursive;
+            font-family: 'Fredoka One', cursive, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            overflow-y: auto; min-height: 100vh;
+            overflow: hidden;
+            height: 100vh;
             display: flex; flex-direction: column;
+            touch-action: manipulation;
         }
 
         header {
@@ -61,10 +63,7 @@
             animation: pulse-light 2s infinite;
         }
 
-        @keyframes pulse-light {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.03); }
-        }
+        @keyframes pulse-light { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
 
         .level-selector {
             background: #eee;
@@ -80,7 +79,8 @@
 
         .game-container {
             display: flex; flex: 1; padding: 15px; gap: 15px;
-            align-items: center; justify-content: center; padding-bottom: 100px;
+            align-items: center; justify-content: center;
+            overflow: hidden;
         }
 
         .card-side {
@@ -114,7 +114,7 @@
         #letter-canvas { display: block; width: 100%; height: 100%; }
 
         #drag-drop-container {
-            display: none; flex-direction: column; align-items: center; gap: 30px; width: 100%;
+            display: none; flex-direction: column; align-items: center; gap: 15px; width: 100%;
         }
 
         .drop-zone {
@@ -131,72 +131,62 @@
         body.level-4 #canvas-container { border-color: var(--level-color-4); }
         body.level-5 #canvas-container { border-color: var(--level-color-5); }
         body.level-6 .drop-zone { border: 6px dashed var(--level-color-6); color: var(--level-color-6); background: rgba(26, 188, 156, 0.05); }
-        body.level-7 .drop-zone { border: 6px dashed var(--level-color-7); color: var(--level-color-7); background: rgba(233, 30, 99, 0.05); width: 220px; font-size: 4rem; }
+        body.level-7 .drop-zone { border: 6px dashed var(--level-color-7); color: var(--level-color-7); background: rgba(233, 30, 99, 0.05); width: 240px; font-size: 4rem; }
 
         .options-container {
-            display: flex; gap: 20px; justify-content: center; width: 100%; flex-wrap: wrap;
+            display: flex; gap: 15px; justify-content: center; width: 100%; flex-wrap: wrap;
         }
 
         .letter-card {
-            width: 100px; height: 120px; background: white; border: 4px solid var(--text-color);
+            width: 90px; height: 110px; background: white; border: 4px solid var(--text-color);
             border-radius: 20px; display: flex; align-items: center; justify-content: center;
-            font-size: 3.5rem; cursor: grab; transition: transform 0.2s, box-shadow 0.2s;
+            font-size: 3rem; cursor: grab; transition: transform 0.1s, box-shadow 0.2s;
             touch-action: none;
             font-family: sans-serif;
             font-weight: bold;
+            z-index: 5;
         }
         body.level-3 .letter-card { box-shadow: 5px 5px 0px var(--level-color-3); }
         body.level-6 .letter-card { box-shadow: 5px 5px 0px var(--level-color-6); }
-        body.level-7 .letter-card { box-shadow: 5px 5px 0px var(--level-color-7); width: 85px; height: 100px; font-size: 2.8rem; }
+        body.level-7 .letter-card { box-shadow: 5px 5px 0px var(--level-color-7); width: 80px; height: 100px; font-size: 2.6rem; }
         
-        .letter-card:active { cursor: grabbing; transform: scale(1.1); z-index: 100; }
-        .letter-card.dragging { opacity: 0.5; }
-
-        @keyframes blink-red {
-            0%, 100% { border-color: var(--primary-color); background-color: white; }
-            50% { border-color: #e74c3c; background-color: #fadbd8; transform: scale(1.02); }
-        }
-        .blink-error { animation: blink-red 0.3s ease-in-out 3; }
-
-        @keyframes pulse-check {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); box-shadow: 0 0 15px var(--success-color); }
-        }
+        .letter-card.dragging { opacity: 0.8; transform: scale(1.1); z-index: 1000; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
 
         .controls {
-            margin-top: 20px; display: flex; gap: 25px;
+            margin-top: 15px; display: flex; gap: 20px;
             min-height: 80px; align-items: center; justify-content: center; width: 100%;
         }
 
         .btn {
-            border: none; border-radius: 50%; width: 60px; height: 60px;
-            font-size: 1.5rem; cursor: pointer; transition: transform 0.2s;
+            border: none; border-radius: 50%; width: 65px; height: 65px;
+            font-size: 1.6rem; cursor: pointer; transition: transform 0.2s;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 5px 0 rgba(0,0,0,0.15); gap: 10px;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.15);
         }
 
         .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.15); }
         .btn-audio { 
             background-color: var(--secondary-color); color: white; border-radius: 50px; 
-            width: auto; padding: 10px 25px; height: auto; gap: 10px;
+            width: auto; padding: 12px 30px; height: auto; gap: 10px;
+            font-size: 1.4rem;
         }
         
         .btn-retry, .btn-check, .btn-skip { display: none; }
         .btn-retry { background-color: var(--primary-color); color: white; }
         .btn-check { 
-            background-color: var(--success-color); color: white; width: 80px; height: 80px; font-size: 2.2rem;
+            background-color: var(--success-color); color: white; width: 85px; height: 85px; font-size: 2.4rem;
             animation: pulse-check 2s infinite ease-in-out;
         }
         .btn-skip { background-color: var(--skip-color); color: white; }
         
         .btn-next { 
             background-color: var(--success-color); color: white; position: fixed; bottom: 20px; right: 20px;
-            padding: 20px 40px; font-size: 2rem; display: none; z-index: 100; border-radius: 50px; width: auto; height: auto;
+            padding: 20px 45px; font-size: 2.2rem; display: none; z-index: 100; border-radius: 50px; width: auto; height: auto;
         }
 
         .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 255, 255, 0.95); display: none;
+            background: rgba(255, 255, 255, 0.96); display: none;
             flex-direction: column; align-items: center; justify-content: center;
             border-radius: 30px; z-index: 50; text-align: center; padding: 15px;
         }
@@ -205,25 +195,24 @@
 
         #loader {
             position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg-color);
-            display: flex; align-items:center; justify-content: center; z-index: 200; font-size: 2rem;
+            display: flex; align-items:center; justify-content: center; z-index: 2000; font-size: 2rem;
         }
 
-        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
         .confetti-star { position: absolute; font-size: 2rem; pointer-events: none; z-index: 60; animation: fall linear forwards; }
+        @keyframes fall { to { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
         .bounce { animation: bounce 0.6s infinite ease-in-out; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
         .pop-in { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
         @media (max-width: 850px) {
-            header { gap: 5px; padding: 10px 5px; }
+            header { padding: 8px 5px; }
             .header-top { gap: 10px; }
-            #instruction-bar { font-size: 0.9rem; padding: 5px 15px; }
-            .game-container { flex-direction: column; padding-bottom: 120px; }
-            .card-side { width: 90vw; height: 300px; max-width: 95%; margin-bottom: 20px; }
-            #canvas-container { width: 90vw; height: 90vw; max-width: 320px; max-height: 320px; }
-            .options-container { gap: 8px; }
-            .letter-card { width: 70px; height: 85px; font-size: 2rem; }
-            body.level-7 .letter-card { width: 60px; height: 75px; font-size: 1.8rem; }
+            .game-container { flex-direction: column; padding-bottom: 100px; }
+            .card-side { width: 95vw; height: 260px; max-width: 95%; margin-bottom: 10px; }
+            #canvas-container { width: 85vw; height: 85vw; max-width: 320px; max-height: 320px; }
+            .letter-card { width: 75px; height: 95px; font-size: 2.2rem; }
+            body.level-7 .letter-card { width: 60px; height: 75px; font-size: 2rem; }
         }
     </style>
 </head>
@@ -233,7 +222,7 @@
 
     <header>
         <div class="header-top">
-            <h1 id="game-title" style="margin:0; font-size: 1.5rem;">Gabriel - Nível 1</h1>
+            <h1 id="game-title" style="margin:0; font-size: 1.4rem;">Gabriel - Nível 1</h1>
             <select class="level-selector" id="level-select" onchange="jumpToLevel(this.value)">
                 <option value="1">Nível 1 (Maiúsculas - Desenhar)</option>
                 <option value="2">Nível 2 (Maiúsculas - Apagar)</option>
@@ -250,7 +239,7 @@
     <div class="game-container">
         <div class="card-side pop-in" id="card-side">
             <img src="" alt="" id="animal-image" class="animal-img">
-            <div id="audio-central-msg" style="display:none; font-size: 1.2rem; margin-bottom: 20px; text-align: center;">Ouça e arraste a letra!</div>
+            <div id="audio-central-msg" style="display:none; font-size: 1.2rem; margin-bottom: 20px; text-align: center;">Ouça e arraste as letras!</div>
             <button class="btn btn-audio" id="audio-btn" onclick="speakCurrent()">
                 <i class="fas fa-volume-high"></i>&nbsp;Ouvir
             </button>
@@ -268,7 +257,7 @@
                 <div id="level-complete-overlay" class="overlay">
                     <div class="star-icon bounce">🏆</div>
                     <h2 id="level-msg" style="font-size: 1.5rem; color: var(--primary-color); margin: 15px 0;">Parabéns Gabriel!</h2>
-                    <button class="btn btn-audio proeminent" style="width:100%; max-width: 250px; background-color: var(--success-color); border-radius: 50px;" onclick="startNextLevel()">
+                    <button class="btn btn-audio proeminent" style="width:100%; max-width: 280px; background-color: var(--success-color); border-radius: 50px;" onclick="startNextLevel()">
                         Continuar <i class="fas fa-chevron-right"></i>
                     </button>
                 </div>
@@ -294,26 +283,21 @@
     <canvas id="ref-canvas" style="display:none;"></canvas>
 
     <script>
-        // --- CONFIGURAÇÃO FIREBASE PROTEGIDA ---
+        // --- PROTEÇÃO DE CONFIGURAÇÃO (OFFLINE/LOCAL) ---
         let db, auth, appId = 'gabriel-alfabeto';
         try {
-            const hasFirebase = typeof firebase !== 'undefined';
-            const hasConfig = typeof __firebase_config !== 'undefined' && __firebase_config;
-
-            if (hasFirebase && hasConfig) {
-                const firebaseConfig = JSON.parse(__firebase_config);
-                firebase.initializeApp(firebaseConfig);
+            if (typeof window.firebase !== 'undefined' && window.__firebase_config) {
+                const config = JSON.parse(window.__firebase_config);
+                firebase.initializeApp(config);
                 db = firebase.firestore();
                 auth = firebase.auth();
             }
-            if (typeof __app_id !== 'undefined') appId = __app_id;
-        } catch (e) {
-            console.warn("Firebase offline mode.");
-        }
+            if (typeof window.__app_id !== 'undefined') appId = window.__app_id;
+        } catch (e) { console.warn("Fallback para modo local ativado."); }
 
-        const IMAGE_BASE_URL = './'; 
+        const IMAGE_BASE_URL = './'; // Busca na mesma pasta do arquivo HTML
 
-        // --- ESTADO DO JOGO ---
+        // --- DADOS DO ALFABETO ---
         let gameData = {
             level: 1,
             currentIndex: 0,
@@ -328,13 +312,11 @@
                 { l: 'V', name: 'Vaca' }, { l: 'W', name: 'Walter' }, { l: 'X', name: 'Xícara' },
                 { l: 'Y', name: 'Yakult' }, { l: 'Z', name: 'Zebra' }
             ],
-            // Ordem específica para o nível 7
-            level7Sequence: "aeiouybzcxdfvgtshsjrklpnmq".toUpperCase().split("")
+            // Sequência solicitada Nível 7: a e i o u y b z c x d w f v g t h s j r k p l n m q
+            level7Sequence: "AEIOUYBZCXDFVGTSHSJRKLPNMQ".split("")
         };
 
-        // Estado do nível 7 (rastrear par coletado)
         let level7Match = { upper: false, lower: false };
-
         let attemptCount = 0;
         let isDrawing = false;
         let isCompleted = false;
@@ -347,43 +329,36 @@
         let canvas, ctx, refCanvas, refCtx;
         const preloadedImages = {};
 
-        // --- PERSISTÊNCIA ---
         async function saveProgress() {
             if (!db || !auth || !auth.currentUser) return;
-            const user = auth.currentUser;
             try {
-                await db.doc(`artifacts/${appId}/users/${user.uid}/data/progress`).set({
+                await db.doc(`artifacts/${appId}/users/${auth.currentUser.uid}/data/progress`).set({
                     level: gameData.level,
                     currentIndex: gameData.currentIndex,
-                    alphabet: gameData.alphabet,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    updatedAt: new Date()
                 });
-            } catch (e) { console.error("Erro ao salvar:", e); }
+            } catch (e) {}
         }
 
         async function loadProgress() {
             if (!db || !auth || !auth.currentUser) return;
-            const user = auth.currentUser;
             try {
-                const doc = await db.doc(`artifacts/${appId}/users/${user.uid}/data/progress`).get();
+                const doc = await db.doc(`artifacts/${appId}/users/${auth.currentUser.uid}/data/progress`).get();
                 if (doc.exists) {
                     const data = doc.data();
                     gameData.level = data.level || 1;
                     gameData.currentIndex = data.currentIndex || 0;
-                    if (data.alphabet) gameData.alphabet = data.alphabet;
                     document.getElementById('level-select').value = gameData.level;
                 }
-            } catch (e) { console.error("Erro ao carregar:", e); }
+            } catch (e) {}
         }
 
-        // --- LÓGICA DE JOGO ---
         function removeAccents(str) { return str.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
 
         function preloadAll() {
             gameData.alphabet.forEach(item => {
                 const img = new Image();
-                const imgName = `${item.l.toLowerCase()}_${removeAccents(item.name)}.jpg`;
-                img.src = `${IMAGE_BASE_URL}${imgName}`;
+                img.src = `${IMAGE_BASE_URL}${item.l.toLowerCase()}_${removeAccents(item.name)}.jpg`;
                 preloadedImages[item.l] = img;
             });
         }
@@ -394,63 +369,47 @@
             ctx = canvas.getContext('2d', { willReadFrequently: true });
             refCanvas = document.getElementById('ref-canvas');
             refCtx = refCanvas.getContext('2d', { willReadFrequently: true });
-            canvas.width = canvasSize.w;
-            canvas.height = canvasSize.h;
-            refCanvas.width = canvasSize.w;
-            refCanvas.height = canvasSize.h;
+            canvas.width = canvasSize.w; canvas.height = canvasSize.h;
+            refCanvas.width = canvasSize.w; refCanvas.height = canvasSize.h;
         }
 
         function renderLetterTemplate() {
             if (!ctx || [3, 6, 7].includes(gameData.level)) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             refCtx.clearRect(0, 0, refCanvas.width, refCanvas.height);
-            visitedBlocks.clear();
-            targetBlocks = [];
+            visitedBlocks.clear(); targetBlocks = [];
             
             let letter = gameData.alphabet[gameData.currentIndex].l;
-            const isLowercaseLevel = [4, 5, 6].includes(gameData.level);
-            if (isLowercaseLevel) letter = letter.toLowerCase();
+            const isLower = [4, 5].includes(gameData.level);
+            if (isLower) letter = letter.toLowerCase();
             
-            const fontSize = isLowercaseLevel ? "340px" : "300px";
-            const guideFont = "bold " + fontSize + " sans-serif"; 
-            ctx.font = guideFont; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            const fontSize = isLower ? "340px" : "300px";
+            ctx.font = "bold " + fontSize + " sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
 
-            if (gameData.level === 1 || gameData.level === 4) {
+            if ([1, 4].includes(gameData.level)) {
                 ctx.strokeStyle = "#CCCCCC"; ctx.setLineDash([15, 15]); ctx.lineWidth = 6;
                 ctx.strokeText(letter, canvas.width / 2, canvas.height / 2);
                 ctx.setLineDash([]);
-            } else if (gameData.level === 2 || gameData.level === 5) {
-                ctx.font = "100 " + fontSize + " sans-serif"; 
-                ctx.fillStyle = "#CCCCCC";
+            } else {
+                ctx.font = "100 " + fontSize + " sans-serif"; ctx.fillStyle = "#CCCCCC";
                 ctx.fillText(letter, canvas.width / 2, canvas.height / 2);
             }
 
-            refCtx.font = "bold " + fontSize + " sans-serif"; 
-            refCtx.textAlign = "center"; refCtx.textBaseline = "middle";
-            refCtx.fillStyle = "black"; 
-            refCtx.fillText(letter, refCanvas.width / 2, refCanvas.height / 2);
+            refCtx.font = "bold " + fontSize + " sans-serif"; refCtx.textAlign = "center"; refCtx.textBaseline = "middle";
+            refCtx.fillStyle = "black"; refCtx.fillText(letter, refCanvas.width / 2, refCanvas.height / 2);
 
             for (let y = 0; y < canvas.height; y += gridSize) {
                 for (let x = 0; x < canvas.width; x += gridSize) {
                     const imgData = refCtx.getImageData(x, y, gridSize, gridSize);
                     let hasContent = false;
-                    for (let i = 0; i < imgData.data.length; i += 4) {
-                        if (imgData.data[i + 3] > 50) { hasContent = true; break; }
-                    }
+                    for (let i = 0; i < imgData.data.length; i += 4) { if (imgData.data[i + 3] > 50) { hasContent = true; break; } }
                     if (hasContent) targetBlocks.push({ x, y });
                 }
             }
         }
 
         function loadLetter(index) {
-            let item;
-            if (gameData.level === 7) {
-                const char = gameData.level7Sequence[index];
-                item = gameData.alphabet.find(a => a.l === char);
-            } else {
-                item = gameData.alphabet[index];
-            }
-            
+            let item = (gameData.level === 7) ? gameData.alphabet.find(a => a.l === gameData.level7Sequence[index]) : gameData.alphabet[index];
             if (!item) return;
 
             document.getElementById('next-btn').style.display = 'none';
@@ -460,32 +419,19 @@
             document.getElementById('congrats-overlay').style.display = 'none';
             document.getElementById('level-complete-overlay').style.display = 'none';
             
-            isCompleted = false;
-            hasStartedDrawing = false;
-            attemptCount = 0;
+            isCompleted = false; hasStartedDrawing = false; attemptCount = 0;
             level7Match = { upper: false, lower: false };
-            
             document.getElementById('game-title').textContent = `Gabriel - Nível ${gameData.level}`;
             document.body.className = `level-${gameData.level}`;
 
-            let instruction = "";
-            switch(gameData.level) {
-                case 1: case 4: instruction = "Desenhe a letra!"; break;
-                case 2: case 5: instruction = "Apague a letra!"; break;
-                case 3: case 6: instruction = "Arraste a letra!"; break;
-                case 7: instruction = "Arraste o par de letras!"; break;
-            }
-            document.getElementById('instruction-bar').textContent = instruction;
+            const instructions = { 1: "Desenhe a letra!", 4: "Desenhe a letra!", 2: "Apague a letra!", 5: "Apague a letra!", 3: "Arraste a letra!", 6: "Arraste a letra!", 7: "Arraste o par de letras!" };
+            document.getElementById('instruction-bar').textContent = instructions[gameData.level] || "";
 
-            if ([3, 6, 7].includes(gameData.level)) {
-                setupDragDropLevel(item);
-            } else {
-                setupStandardLevels(item);
-            }
+            if ([3, 6, 7].includes(gameData.level)) setupDragDropLevel(item);
+            else setupStandardLevels(item);
 
             const card = document.getElementById('card-side');
             card.style.animation = 'none'; void card.offsetWidth; card.style.animation = 'pop 0.4s forwards';
-
             setTimeout(() => speakCurrent(), 400);
         }
 
@@ -495,10 +441,8 @@
             document.getElementById('standard-controls').style.display = 'flex';
             document.getElementById('animal-image').style.display = 'block';
             document.getElementById('audio-central-msg').style.display = 'none';
-            
             const preImg = preloadedImages[item.l];
             document.getElementById('animal-image').src = (preImg && preImg.complete) ? preImg.src : `${IMAGE_BASE_URL}${item.l.toLowerCase()}_${removeAccents(item.name)}.jpg`;
-            
             renderLetterTemplate();
         }
 
@@ -510,88 +454,47 @@
             document.getElementById('audio-central-msg').style.display = 'block';
 
             const dropZone = document.getElementById('drop-zone');
-            dropZone.innerHTML = '<i class="fas fa-question"></i>';
-            dropZone.style.borderStyle = 'dashed';
+            dropZone.innerHTML = '<i class="fas fa-question"></i>'; dropZone.style.borderStyle = 'dashed';
 
             let options = [];
             if (gameData.level === 7) {
-                // Nível 7: 3 maiúsculas e 3 minúsculas
-                const correctUpper = item.l;
-                const correctLower = item.l.toLowerCase();
-                options.push(correctUpper, correctLower);
-
-                const others = gameData.alphabet.filter(a => a.l !== item.l);
-                for (let i = 0; i < 2; i++) {
-                    const randIndex = Math.floor(Math.random() * others.length);
-                    const distractor = others.splice(randIndex, 1)[0].l;
-                    options.push(distractor, distractor.toLowerCase());
-                }
+                options.push(item.l, item.l.toLowerCase());
+                const others = gameData.alphabet.filter(a => a.l !== item.l).sort(() => 0.5 - Math.random());
+                for (let i = 0; i < 2; i++) options.push(others[i].l, others[i].l.toLowerCase());
             } else {
-                // Níveis 3 e 6
-                const isLowercase = gameData.level === 6;
-                const targetChar = isLowercase ? item.l.toLowerCase() : item.l;
-                options.push(targetChar);
-
-                const others = gameData.alphabet.filter(a => a.l !== item.l);
-                for (let i = 0; i < 2; i++) {
-                    const rand = Math.floor(Math.random() * others.length);
-                    const char = others.splice(rand, 1)[0].l;
-                    options.push(isLowercase ? char.toLowerCase() : char);
-                }
+                const target = gameData.level === 6 ? item.l.toLowerCase() : item.l;
+                options.push(target);
+                const others = gameData.alphabet.filter(a => a.l !== item.l).sort(() => 0.5 - Math.random());
+                for (let i = 0; i < 2; i++) options.push(gameData.level === 6 ? others[i].l.toLowerCase() : others[i].l);
             }
-            
             options.sort(() => Math.random() - 0.5);
 
-            const container = document.getElementById('options-container');
-            container.innerHTML = '';
+            const container = document.getElementById('options-container'); container.innerHTML = '';
             options.forEach(l => {
                 const card = document.createElement('div');
-                card.className = 'letter-card';
-                card.textContent = l;
-                card.draggable = true;
+                card.className = 'letter-card'; card.textContent = l; card.draggable = true;
                 
-                card.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', l);
-                    card.classList.add('dragging');
-                });
-                card.addEventListener('dragend', () => card.classList.remove('dragging'));
-
-                let initialX, initialY;
+                // Suporte a Toque para Tablet
+                let startX, startY;
                 card.addEventListener('touchstart', (e) => {
-                    const touch = e.touches[0];
-                    initialX = touch.clientX;
-                    initialY = touch.clientY;
-                    card.style.position = 'fixed';
-                    card.style.zIndex = '1000';
-                    card.classList.add('dragging');
+                    const t = e.touches[0]; startX = t.clientX; startY = t.clientY;
+                    card.classList.add('dragging'); card.style.position = 'fixed'; card.style.zIndex = '1000';
                 });
-                
                 card.addEventListener('touchmove', (e) => {
-                    const touch = e.touches[0];
-                    card.style.left = (touch.clientX - 40) + 'px';
-                    card.style.top = (touch.clientY - 50) + 'px';
+                    const t = e.touches[0]; card.style.left = (t.clientX - 45) + 'px'; card.style.top = (t.clientY - 55) + 'px';
                 });
-
                 card.addEventListener('touchend', (e) => {
-                    card.classList.remove('dragging');
-                    const touch = e.changedTouches[0];
+                    card.classList.remove('dragging'); const t = e.changedTouches[0];
                     const dzRect = dropZone.getBoundingClientRect();
-                    
-                    if (touch.clientX > dzRect.left && touch.clientX < dzRect.right &&
-                        touch.clientY > dzRect.top && touch.clientY < dzRect.bottom) {
-                        const success = checkLevelDrop(l);
-                        if (!success) {
-                            card.style.position = 'static';
-                            card.style.left = ''; card.style.top = '';
-                        } else {
-                            card.style.display = 'none';
-                        }
-                    } else {
-                        card.style.position = 'static';
-                        card.style.left = ''; card.style.top = '';
+                    if (t.clientX > dzRect.left && t.clientX < dzRect.right && t.clientY > dzRect.top && t.clientY < dzRect.bottom) {
+                        if (checkLevelDrop(l)) { card.style.display = 'none'; return; }
                     }
+                    card.style.position = 'static'; card.style.left = ''; card.style.top = '';
                 });
 
+                // Mouse (PC)
+                card.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', l); card.classList.add('dragging'); });
+                card.addEventListener('dragend', () => card.classList.remove('dragging'));
                 container.appendChild(card);
             });
         }
@@ -600,131 +503,72 @@
         dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('hover'); });
         dz.addEventListener('dragleave', () => dz.classList.remove('hover'));
         dz.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dz.classList.remove('hover');
+            e.preventDefault(); dz.classList.remove('hover');
             const dropped = e.dataTransfer.getData('text/plain');
-            const cards = document.querySelectorAll('.letter-card');
-            let selectedCard = null;
-            cards.forEach(c => { if(c.textContent === dropped) selectedCard = c; });
-            const success = checkLevelDrop(dropped);
-            if (success && selectedCard) selectedCard.style.display = 'none';
+            if (checkLevelDrop(dropped)) {
+                const cards = document.querySelectorAll('.letter-card');
+                cards.forEach(c => { if(c.textContent === dropped) c.style.display = 'none'; });
+            }
         });
 
         function checkLevelDrop(letter) {
-            let item;
+            let item = (gameData.level === 7) ? gameData.alphabet.find(a => a.l === gameData.level7Sequence[gameData.currentIndex]) : gameData.alphabet[gameData.currentIndex];
             if (gameData.level === 7) {
-                item = gameData.alphabet.find(a => a.l === gameData.level7Sequence[gameData.currentIndex]);
-            } else {
-                item = gameData.alphabet[gameData.currentIndex];
-            }
-
-            if (gameData.level === 7) {
-                const isCorrectUpper = letter === item.l;
-                const isCorrectLower = letter === item.l.toLowerCase();
-                
-                if (isCorrectUpper || isCorrectLower) {
-                    const dropZone = document.getElementById('drop-zone');
-                    if (isCorrectUpper) level7Match.upper = true;
-                    if (isCorrectLower) level7Match.lower = true;
-                    
-                    // Atualiza visual da zona
-                    let displayText = "";
-                    if (level7Match.upper) displayText += item.l + " ";
-                    if (level7Match.lower) displayText += item.l.toLowerCase();
-                    dropZone.textContent = displayText.trim();
-                    
-                    if (level7Match.upper && level7Match.lower) {
-                        dropZone.style.borderStyle = 'solid';
-                        showSuccess();
-                    }
+                const isUpper = letter === item.l; const isLower = letter === item.l.toLowerCase();
+                if (isUpper || isLower) {
+                    if (isUpper) level7Match.upper = true; if (isLower) level7Match.lower = true;
+                    let display = "";
+                    if (level7Match.upper) display += item.l + " "; if (level7Match.lower) display += item.l.toLowerCase();
+                    dz.textContent = display.trim();
+                    if (level7Match.upper && level7Match.lower) { dz.style.borderStyle = 'solid'; showSuccess(); }
                     return true;
                 }
             } else {
                 const correct = (gameData.level === 6) ? item.l.toLowerCase() : item.l;
-                if (letter === correct) {
-                    const dropZone = document.getElementById('drop-zone');
-                    dropZone.textContent = letter;
-                    dropZone.style.borderStyle = 'solid';
-                    showSuccess();
-                    return true;
-                }
+                if (letter === correct) { dz.textContent = letter; dz.style.borderStyle = 'solid'; showSuccess(); return true; }
             }
-
-            attemptCount++;
-            speak("Ops! Tente novamente!");
+            attemptCount++; speak("Ops! Tente novamente!");
             if (attemptCount >= 2) document.getElementById('skip-btn').style.display = 'flex';
-            dz.style.borderColor = 'red';
-            setTimeout(() => dz.style.borderColor = '', 500);
+            dz.style.borderColor = 'red'; setTimeout(() => dz.style.borderColor = '', 500);
             return false;
         }
 
         function speakCurrent() {
-            let item;
-            if (gameData.level === 7) {
-                item = gameData.alphabet.find(a => a.l === gameData.level7Sequence[gameData.currentIndex]);
-            } else {
-                item = gameData.alphabet[gameData.currentIndex];
+            let item = (gameData.level === 7) ? gameData.alphabet.find(a => a.l === gameData.level7Sequence[gameData.currentIndex]) : gameData.alphabet[gameData.currentIndex];
+            if (!item) return;
+            let text = item.l;
+            if ((gameData.level === 7 && gameData.currentIndex === 0) || item.l === 'A') {
+                const prefix = { 1: "Desenhe a letra ", 4: "Desenhe a letra ", 2: "Apague a letra ", 5: "Apague a letra ", 3: "Arraste a letra ", 6: "Arraste a letra ", 7: "Arraste o par da letra " };
+                text = (prefix[gameData.level] || "") + item.l;
             }
-
-            let audioText = item.l;
-            // Pronuncia instrução APENAS para o primeiro item de cada nível (A ou primeiro da sequência)
-            const isFirst = (gameData.level === 7) ? gameData.currentIndex === 0 : item.l === 'A';
-            
-            if (isFirst) {
-                let instructionSpeech = "";
-                switch(gameData.level) {
-                    case 1: case 4: instructionSpeech = "Desenhe a letra "; break;
-                    case 2: case 5: instructionSpeech = "Apague a letra "; break;
-                    case 3: case 6: instructionSpeech = "Arraste a letra "; break;
-                    case 7: instructionSpeech = "Arraste o par da letra "; break;
-                }
-                audioText = instructionSpeech + item.l;
-            }
-            
-            speak(audioText, () => {
-                setTimeout(() => speak(item.name), 500);
-            });
+            speak(text, () => setTimeout(() => speak(item.name), 500));
         }
 
         function speak(text, callback) {
-            if (!window.speechSynthesis) return;
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'pt-BR'; utterance.rate = 1.4; 
-            const voices = window.speechSynthesis.getVoices();
-            const fem = voices.find(v => v.lang.includes('pt-BR') && (v.name.includes('Maria') || v.name.includes('Luciana') || v.name.includes('Victoria'))) || voices.find(v => v.lang.includes('pt-BR'));
-            if (fem) utterance.voice = fem;
-            if (callback) utterance.onend = callback;
-            window.speechSynthesis.speak(utterance);
+            if (!window.speechSynthesis) return; window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text); u.lang = 'pt-BR'; u.rate = 1.3; 
+            const vs = window.speechSynthesis.getVoices();
+            const f = vs.find(v => v.lang.includes('pt-BR') && (v.name.includes('Maria') || v.name.includes('Luciana'))) || vs.find(v => v.lang.includes('pt-BR'));
+            if (f) u.voice = f; if (callback) u.onend = callback;
+            window.speechSynthesis.speak(u);
         }
 
         function manualCheck() {
             if (isCompleted || [3, 6, 7].includes(gameData.level)) return;
             const percentage = (visitedBlocks.size / targetBlocks.length) * 100;
-            const isErasing = [2, 5].includes(gameData.level);
-            const required = isErasing ? 80 : 65;
-
-            if (percentage >= required) {
-                showSuccess();
-            } else {
-                attemptCount++;
-                speak("Quase, Gabriel! Tente novamente!");
+            const required = [2, 5].includes(gameData.level) ? 80 : 65;
+            if (percentage >= required) showSuccess();
+            else {
+                attemptCount++; speak("Quase, Gabriel! Tente novamente!");
                 document.getElementById('canvas-container').classList.add('blink-error');
-                setTimeout(() => {
-                    document.getElementById('canvas-container').classList.remove('blink-error');
-                    resetCanvas(); 
-                }, 1000);
+                setTimeout(() => { document.getElementById('canvas-container').classList.remove('blink-error'); resetCanvas(); }, 1000);
             }
         }
 
         function showSuccess() {
             isCompleted = true;
-            if (![3, 6, 7].includes(gameData.level)) {
-                document.getElementById('congrats-overlay').style.display = 'flex';
-                speak("Muito bem! Você conseguiu!");
-            } else {
-                speak("Muito bem! Você acertou a letra!");
-            }
+            if (![3, 6, 7].includes(gameData.level)) document.getElementById('congrats-overlay').style.display = 'flex';
+            speak("Muito bem! Você conseguiu!");
             document.getElementById('next-btn').style.display = 'block';
             document.getElementById('check-btn').style.display = 'none';
             document.getElementById('retry-btn').style.display = 'none';
@@ -734,90 +578,58 @@
 
         function createConfetti() {
             for (let i = 0; i < 20; i++) {
-                const star = document.createElement('div');
-                star.className = 'confetti-star'; star.innerHTML = '⭐';
-                star.style.left = Math.random() * 100 + 'vw'; star.style.top = '-50px';
-                star.style.animationDuration = (Math.random() * 1.5 + 1) + 's';
-                document.body.appendChild(star);
-                setTimeout(() => star.remove(), 2500);
+                const s = document.createElement('div'); s.className = 'confetti-star'; s.innerHTML = '⭐';
+                s.style.left = Math.random() * 100 + 'vw'; s.style.top = '-50px';
+                s.style.animationDuration = (Math.random() * 1.5 + 1) + 's';
+                document.body.appendChild(s); setTimeout(() => s.remove(), 2500);
             }
         }
 
         function nextLetter() {
             gameData.currentIndex++;
             const max = (gameData.level === 7) ? gameData.level7Sequence.length : gameData.alphabet.length;
-            
-            if (gameData.currentIndex < max) {
-                saveProgress();
-                loadLetter(gameData.currentIndex);
-            } else {
-                showLevelComplete();
-            }
+            if (gameData.currentIndex < max) { saveProgress(); loadLetter(gameData.currentIndex); }
+            else showLevelComplete();
         }
 
         function skipLetter() {
-            // No nível 7, não usamos o splice original pois a ordem é fixa
-            if (gameData.level === 7) {
-                gameData.currentIndex++;
-                if (gameData.currentIndex >= gameData.level7Sequence.length) gameData.currentIndex = 0;
-            } else {
-                const itemToSkip = gameData.alphabet.splice(gameData.currentIndex, 1)[0];
-                gameData.alphabet.push(itemToSkip);
+            if (gameData.level === 7) gameData.currentIndex = (gameData.currentIndex + 1) % gameData.level7Sequence.length;
+            else {
+                const item = gameData.alphabet.splice(gameData.currentIndex, 1)[0]; gameData.alphabet.push(item);
                 if (gameData.currentIndex >= gameData.alphabet.length) gameData.currentIndex = 0;
             }
-            saveProgress(); loadLetter(gameData.currentIndex);
-            speak("Tudo bem! Vamos ver essa depois.");
+            saveProgress(); loadLetter(gameData.currentIndex); speak("Tudo bem! Vamos ver essa depois.");
         }
 
         function showLevelComplete() {
             document.getElementById('next-btn').style.display = 'none';
             document.getElementById('canvas-container').style.display = 'flex';
             document.getElementById('drag-drop-container').style.display = 'none';
-
-            const overlay = document.getElementById('level-complete-overlay');
-            overlay.style.display = 'flex';
-            
-            let msg = "";
-            switch(gameData.level) {
-                case 1: msg = "Parabéns! Nível 1 Concluído!"; break;
-                case 2: msg = "Incrível! Nível 2 Concluído!"; break;
-                case 3: msg = "Excelente! Nível 3 Concluído!"; break;
-                case 4: msg = "Ótimo! Nível 4 Concluído!"; break;
-                case 5: msg = "Fantástico! Nível 5 Concluído!"; break;
-                case 6: msg = "Maravilhoso! Nível 6 Concluído!"; break;
-                case 7: msg = "Uau! Gabriel, você é um mestre do Alfabeto!"; break;
-            }
-            
+            const overlay = document.getElementById('level-complete-overlay'); overlay.style.display = 'flex';
+            const msgs = ["Nível 1 Concluído!", "Nível 2 Concluído!", "Nível 3 Concluído!", "Nível 4 Concluído!", "Nível 5 Concluído!", "Nível 6 Concluído!", "Mestre do Alfabeto!"];
+            const msg = "Parabéns Gabriel! " + (msgs[gameData.level - 1] || "");
             document.getElementById('level-msg').textContent = msg;
-            speak(msg);
-            createConfetti();
+            speak(msg); createConfetti();
         }
 
         function startNextLevel() {
             document.getElementById('level-complete-overlay').style.display = 'none';
-            if (gameData.level < 7) {
-                gameData.level++;
-            } else {
-                gameData.level = 1; 
-            }
+            gameData.level = gameData.level < 7 ? gameData.level + 1 : 1;
             document.getElementById('level-select').value = gameData.level;
             gameData.currentIndex = 0;
             gameData.alphabet.sort((a, b) => a.l.localeCompare(b.l));
-            saveProgress(); 
-            loadLetter(0);
+            saveProgress(); loadLetter(0);
         }
 
         function jumpToLevel(lvl) {
-            gameData.level = parseInt(lvl);
-            gameData.currentIndex = 0;
+            gameData.level = parseInt(lvl); gameData.currentIndex = 0;
             gameData.alphabet.sort((a, b) => a.l.localeCompare(b.l));
-            saveProgress();
-            loadLetter(0);
+            saveProgress(); loadLetter(0);
         }
 
         function resetCanvas() {
             renderLetterTemplate();
-            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('retry-btn').style.display = 'none';
             document.getElementById('check-btn').style.display = 'none';
             document.getElementById('retry-btn').style.display = 'none';
             document.getElementById('skip-btn').style.display = (attemptCount >= 2) ? 'flex' : 'none';
@@ -829,82 +641,54 @@
             if (isCompleted || [3, 6, 7].includes(gameData.level)) return;
             isDrawing = true;
             if (!hasStartedDrawing) {
-                hasStartedDrawing = true;
-                document.getElementById('check-btn').style.display = 'flex';
-                document.getElementById('retry-btn').style.display = 'flex';
-                if(attemptCount >= 2) document.getElementById('skip-btn').style.display = 'flex';
+                hasStartedDrawing = true; document.getElementById('check-btn').style.display = 'flex'; document.getElementById('retry-btn').style.display = 'flex';
             }
-            ctx.beginPath();
-            const pos = getMousePos(e);
-            ctx.moveTo(pos.x, pos.y);
-            markBlocks(pos.x, pos.y);
+            ctx.beginPath(); const p = getMousePos(e); ctx.moveTo(p.x, p.y); markBlocks(p.x, p.y);
         }
 
         function draw(e) {
             if (!isDrawing || isCompleted || [3, 6, 7].includes(gameData.level)) return;
-            const pos = getMousePos(e);
-            ctx.lineTo(pos.x, pos.y);
+            const p = getMousePos(e); ctx.lineTo(p.x, p.y);
             ctx.strokeStyle = ([2, 5].includes(gameData.level)) ? "white" : "#FF6B6B";
-            if (gameData.level === 4) ctx.lineWidth = 30;
-            else if (gameData.level === 5) ctx.lineWidth = 40;
-            else ctx.lineWidth = 45;
-            ctx.lineCap = "round"; ctx.lineJoin = "round";
-            ctx.stroke();
-            markBlocks(pos.x, pos.y);
+            ctx.lineWidth = (gameData.level === 4) ? 30 : (gameData.level === 5 ? 40 : 45);
+            ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke(); markBlocks(p.x, p.y);
         }
 
         function markBlocks(x, y) {
-            let threshold = 35;
-            if (gameData.level === 4) threshold = 25;
-            if (gameData.level === 5) threshold = 30;
-            targetBlocks.forEach((block, index) => {
-                if (!visitedBlocks.has(index)) {
-                    const dist = Math.hypot(x - (block.x + gridSize/2), y - (block.y + gridSize/2));
-                    if (dist < threshold) visitedBlocks.add(index);
-                }
+            let t = 35; if (gameData.level === 4) t = 25; if (gameData.level === 5) t = 30;
+            targetBlocks.forEach((b, i) => {
+                if (!visitedBlocks.has(i)) { if (Math.hypot(x - (b.x + gridSize/2), y - (b.y + gridSize/2)) < t) visitedBlocks.add(i); }
             });
         }
 
         function getMousePos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return { x: (clientX - rect.left) * (canvas.width / rect.width), y: (clientY - rect.top) * (canvas.height / rect.height) };
+            const r = canvas.getBoundingClientRect();
+            const cx = e.touches ? e.touches[0].clientX : e.clientX;
+            const cy = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: (cx - r.left) * (canvas.width / rect.width), y: (cy - r.top) * (canvas.height / rect.height) };
         }
 
         async function init() {
-            initCanvas();
-            preloadAll();
-            const forceLoad = () => {
-                if (document.getElementById('loader').style.display !== 'none') {
-                    loadLetter(gameData.currentIndex);
-                    document.getElementById('loader').style.display = 'none';
-                }
-            };
+            initCanvas(); preloadAll();
+            const forceLoad = () => { if (document.getElementById('loader').style.display !== 'none') { loadLetter(gameData.currentIndex); document.getElementById('loader').style.display = 'none'; } };
             const safetyTimeout = setTimeout(forceLoad, 2500);
             try {
                 if (typeof firebase !== 'undefined' && auth) {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await auth.signInWithCustomToken(__initial_auth_token);
-                    } else { await auth.signInAnonymously(); }
+                    if (typeof window.__initial_auth_token !== 'undefined' && window.__initial_auth_token) await auth.signInWithCustomToken(window.__initial_auth_token);
+                    else await auth.signInAnonymously();
                     await loadProgress();
                 }
             } catch (e) {} finally {
-                canvas.addEventListener('mousedown', startDrawing);
-                canvas.addEventListener('mousemove', draw);
-                window.addEventListener('mouseup', () => isDrawing = false);
-                canvas.addEventListener('touchstart', (e) => { if(![3, 6, 7].includes(gameData.level)) e.preventDefault(); startDrawing(e); }, {passive: false});
-                canvas.addEventListener('touchmove', (e) => { if(![3, 6, 7].includes(gameData.level)) e.preventDefault(); draw(e); }, {passive: false});
+                canvas.addEventListener('mousedown', startDrawing); canvas.addEventListener('mousemove', draw); window.addEventListener('mouseup', () => isDrawing = false);
+                canvas.addEventListener('touchstart', (e) => { if(![3, 6, 7].includes(gameData.level)) { e.preventDefault(); startDrawing(e); } }, {passive: false});
+                canvas.addEventListener('touchmove', (e) => { if(![3, 6, 7].includes(gameData.level)) { e.preventDefault(); draw(e); } }, {passive: false});
                 canvas.addEventListener('touchend', () => isDrawing = false);
-                clearTimeout(safetyTimeout);
-                forceLoad();
+                clearTimeout(safetyTimeout); forceLoad();
             }
         }
 
         window.onload = init;
-        if (window.speechSynthesis) {
-            window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-        }
+        if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
     </script>
 </body>
 </html>
