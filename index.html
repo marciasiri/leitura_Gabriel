@@ -302,10 +302,13 @@
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
                 auth = firebase.auth();
+                console.log("Banco de dados conectado.");
+            } else {
+                console.log("Iniciando em modo offline (Sem banco de dados).");
             }
             if (typeof __app_id !== 'undefined') appId = __app_id;
         } catch (e) {
-            console.warn("Firebase offline mode.");
+            console.warn("Firebase não disponível, continuando em modo offline.");
         }
 
         // --- DEFINIÇÃO DE CAMINHO DE IMAGEM ---
@@ -517,12 +520,14 @@
                 card.textContent = l;
                 card.draggable = true;
                 
+                // Mouse Events
                 card.addEventListener('dragstart', (e) => {
                     e.dataTransfer.setData('text/plain', l);
                     card.classList.add('dragging');
                 });
                 card.addEventListener('dragend', () => card.classList.remove('dragging'));
 
+                // Touch Events
                 let initialX, initialY;
                 card.addEventListener('touchstart', (e) => {
                     const touch = e.touches[0];
@@ -546,9 +551,21 @@
                     
                     if (touch.clientX > dzRect.left && touch.clientX < dzRect.right &&
                         touch.clientY > dzRect.top && touch.clientY < dzRect.bottom) {
-                        checkLevelDrop(l);
+                        const success = checkLevelDrop(l);
+                        if (!success) {
+                            // Errou: Volta para a posição inicial
+                            card.style.position = 'static';
+                            card.style.left = '';
+                            card.style.top = '';
+                        } else {
+                            // Acertou: O cartão arrastado desaparece (pois a letra já aparece na caixa)
+                            card.style.display = 'none';
+                        }
                     } else {
+                        // Soltou fora: Volta para a posição inicial
                         card.style.position = 'static';
+                        card.style.left = '';
+                        card.style.top = '';
                     }
                 });
 
@@ -563,7 +580,16 @@
             e.preventDefault();
             dz.classList.remove('hover');
             const dropped = e.dataTransfer.getData('text/plain');
-            checkLevelDrop(dropped);
+            
+            // Lógica para mouse: esconder o cartão original se acertar
+            const cards = document.querySelectorAll('.letter-card');
+            let selectedCard = null;
+            cards.forEach(c => { if(c.textContent === dropped) selectedCard = c; });
+
+            const success = checkLevelDrop(dropped);
+            if (success && selectedCard) {
+                selectedCard.style.display = 'none';
+            }
         });
 
         function checkLevelDrop(letter) {
@@ -575,12 +601,14 @@
                 dropZone.textContent = letter;
                 dropZone.style.borderStyle = 'solid';
                 showSuccess();
+                return true;
             } else {
                 attemptCount++;
                 speak("Ops! Tente novamente!");
                 if (attemptCount >= 2) document.getElementById('skip-btn').style.display = 'flex';
                 dz.style.borderColor = 'red';
                 setTimeout(() => dz.style.borderColor = '', 500);
+                return false;
             }
         }
 
