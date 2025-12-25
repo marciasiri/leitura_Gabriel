@@ -7,6 +7,10 @@
     <!-- Fontes e Ícones -->
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
     <style>
         :root {
             --primary-color: #FF6B6B;
@@ -14,317 +18,355 @@
             --accent-color: #FFE66D;
             --success-color: #58D68D;
             --skip-color: #AAB7B8;
+            --level-color-1: #FF6B6B;
+            --level-color-2: #3498db;
+            --level-color-3: #9b59b6;
+            --level-color-4: #f39c12;
+            --level-color-5: #e67e22;
+            --level-color-6: #1abc9c;
             --text-color: #2F2F2F;
             --bg-color: #F7FFF7;
         }
 
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
 
         body {
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             font-family: 'Fredoka One', cursive;
             background-color: var(--bg-color);
             color: var(--text-color);
-            overflow-y: auto;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            overflow-y: auto; min-height: 100vh;
+            display: flex; flex-direction: column;
         }
 
         header {
-            padding: 10px;
-            text-align: center;
-            background-color: white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            z-index: 10;
+            padding: 10px; text-align: center; background-color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 10;
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+        }
+
+        .header-top {
+            display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap;
+        }
+
+        #instruction-bar {
+            background-color: var(--accent-color);
+            color: var(--text-color);
+            padding: 5px 20px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-top: 5px;
+            animation: pulse-light 2s infinite;
+        }
+
+        @keyframes pulse-light {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+
+        .level-selector {
+            background: #eee;
+            border: 2px solid #ccc;
+            padding: 8px 15px;
+            border-radius: 15px;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1rem;
+            color: #555;
+            cursor: pointer;
+            outline: none;
         }
 
         .game-container {
-            display: flex;
-            flex: 1;
-            padding: 15px;
-            gap: 15px;
-            align-items: center;
-            justify-content: center;
-            padding-bottom: 100px;
+            display: flex; flex: 1; padding: 15px; gap: 15px;
+            align-items: center; justify-content: center; padding-bottom: 100px;
         }
 
         .card-side {
-            flex: 1;
-            background: white;
-            border-radius: 30px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            flex: 1; background: white; border-radius: 30px; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
             box-shadow: 10px 10px 0px var(--secondary-color);
-            border: 4px solid var(--text-color);
-            min-height: 300px;
-            max-width: 45%;
+            border: 4px solid var(--text-color); height: 400px; max-width: 45%;
+            transition: all 0.3s ease;
         }
 
         .animal-img {
-            max-width: 90%;
-            max-height: 220px;
-            object-fit: contain;
-            margin-bottom: 20px;
-            border-radius: 20px;
+            max-width: 95%; max-height: 320px; object-fit: contain;
+            margin-bottom: 10px; border-radius: 20px;
         }
 
         .drawing-side {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            width: 100%;
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; position: relative; width: 100%;
         }
 
         #canvas-container {
-            position: relative;
-            background: white;
-            border-radius: 30px;
+            position: relative; background: white; border-radius: 30px;
             border: 6px dashed var(--primary-color);
             box-shadow: 10px 10px 0px var(--accent-color);
-            cursor: crosshair;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            touch-action: none; 
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 400px; 
-            height: 400px;
+            cursor: crosshair; overflow: hidden; transition: all 0.3s ease;
+            touch-action: none; margin: 0 auto;
+            display: flex; align-items: center; justify-content: center;
+            width: 400px; height: 400px;
         }
 
-        #letter-canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
+        #letter-canvas { display: block; width: 100%; height: 100%; }
+
+        #drag-drop-container {
+            display: none; flex-direction: column; align-items: center; gap: 30px; width: 100%;
         }
+
+        .drop-zone {
+            width: 180px; height: 180px; border-radius: 30px; display: flex;
+            align-items: center; justify-content: center; font-size: 5rem;
+            position: relative; transition: all 0.3s;
+        }
+        
+        body.level-1 #canvas-container { border-color: var(--level-color-1); }
+        body.level-2 #canvas-container { border-color: var(--level-color-2); }
+        body.level-3 .drop-zone { border: 6px dashed var(--level-color-3); color: var(--level-color-3); background: rgba(155, 89, 182, 0.05); }
+        body.level-4 #canvas-container { border-color: var(--level-color-4); }
+        body.level-5 #canvas-container { border-color: var(--level-color-5); }
+        body.level-6 .drop-zone { border: 6px dashed var(--level-color-6); color: var(--level-color-6); background: rgba(26, 188, 156, 0.05); }
+
+        .options-container {
+            display: flex; gap: 20px; justify-content: center; width: 100%;
+        }
+
+        .letter-card {
+            width: 100px; height: 120px; background: white; border: 4px solid var(--text-color);
+            border-radius: 20px; display: flex; align-items: center; justify-content: center;
+            font-size: 3.5rem; cursor: grab; transition: transform 0.2s, box-shadow 0.2s;
+            touch-action: none;
+        }
+        body.level-3 .letter-card { box-shadow: 5px 5px 0px var(--level-color-3); }
+        body.level-6 .letter-card { box-shadow: 5px 5px 0px var(--level-color-6); }
+        
+        .letter-card:active { cursor: grabbing; transform: scale(1.1); z-index: 100; }
+        .letter-card.dragging { opacity: 0.5; }
 
         @keyframes blink-red {
-            0% { border-color: var(--primary-color); background-color: white; }
+            0%, 100% { border-color: var(--primary-color); background-color: white; }
             50% { border-color: #e74c3c; background-color: #fadbd8; transform: scale(1.02); }
-            100% { border-color: var(--primary-color); background-color: white; }
         }
-        .blink-error {
-            animation: blink-red 0.3s ease-in-out 3;
-        }
+        .blink-error { animation: blink-red 0.3s ease-in-out 3; }
 
         @keyframes pulse-check {
-            0% { transform: scale(1); box-shadow: 0 5px 0 rgba(0,0,0,0.15); }
+            0%, 100% { transform: scale(1); }
             50% { transform: scale(1.1); box-shadow: 0 0 15px var(--success-color); }
-            100% { transform: scale(1); box-shadow: 0 5px 0 rgba(0,0,0,0.15); }
         }
 
         .controls {
-            margin-top: 20px;
-            display: flex;
-            gap: 25px;
-            min-height: 80px;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
+            margin-top: 20px; display: flex; gap: 25px;
+            min-height: 80px; align-items: center; justify-content: center; width: 100%;
         }
 
         .btn {
-            border: none;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            padding: 0;
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: transform 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 5px 0 rgba(0,0,0,0.15);
+            border: none; border-radius: 50%; width: 60px; height: 60px;
+            font-size: 1.5rem; cursor: pointer; transition: transform 0.2s;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.15); gap: 10px;
         }
 
         .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.15); }
-        
         .btn-audio { 
-            background-color: var(--secondary-color); 
-            color: white;
-            border-radius: 50px;
-            width: auto;
-            padding: 10px 25px;
-            height: auto;
+            background-color: var(--secondary-color); color: white; border-radius: 50px; 
+            width: auto; padding: 10px 25px; height: auto; gap: 10px;
         }
         
         .btn-retry, .btn-check, .btn-skip { display: none; }
         .btn-retry { background-color: var(--primary-color); color: white; }
         .btn-check { 
-            background-color: var(--success-color); 
-            color: white;
-            width: 80px;
-            height: 80px;
-            font-size: 2.2rem;
+            background-color: var(--success-color); color: white; width: 80px; height: 80px; font-size: 2.2rem;
             animation: pulse-check 2s infinite ease-in-out;
         }
         .btn-skip { background-color: var(--skip-color); color: white; }
         
         .btn-next { 
-            background-color: var(--success-color); 
-            color: white;
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 20px 40px;
-            font-size: 2rem;
-            display: none; 
-            z-index: 100;
-            border-radius: 50px;
-            width: auto;
-            height: auto;
+            background-color: var(--success-color); color: white; position: fixed; bottom: 20px; right: 20px;
+            padding: 20px 40px; font-size: 2rem; display: none; z-index: 100; border-radius: 50px; width: auto; height: auto;
         }
 
-        #congrats-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.92);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-radius: 30px;
-            pointer-events: none;
-            z-index: 50;
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.95); display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            border-radius: 30px; z-index: 50; text-align: center; padding: 15px;
         }
 
-        .star-icon { font-size: 8rem; color: var(--accent-color); filter: drop-shadow(0 0 10px orange); }
+        .star-icon { font-size: 6rem; color: var(--accent-color); filter: drop-shadow(0 0 10px orange); }
 
-        .confetti-star {
-            position: absolute;
-            font-size: 2rem;
-            pointer-events: none;
-            z-index: 60;
-            animation: fall linear forwards;
+        #loader {
+            position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg-color);
+            display: flex; align-items:center; justify-content: center; z-index: 200; font-size: 2rem;
         }
 
         @keyframes fall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-25px); } }
+        .confetti-star { position: absolute; font-size: 2rem; pointer-events: none; z-index: 60; animation: fall linear forwards; }
         .bounce { animation: bounce 0.6s infinite ease-in-out; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
         .pop-in { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
         @media (max-width: 850px) {
+            header { gap: 5px; padding: 10px 5px; }
+            .header-top { gap: 10px; }
+            #instruction-bar { font-size: 0.9rem; padding: 5px 15px; }
             .game-container { flex-direction: column; padding-bottom: 120px; }
-            .card-side, .drawing-side { max-width: 95%; width: 100%; height: auto; }
+            .card-side { width: 90vw; height: 300px; max-width: 95%; margin-bottom: 20px; }
             #canvas-container { width: 90vw; height: 90vw; max-width: 320px; max-height: 320px; }
+            .options-container { gap: 10px; }
+            .letter-card { width: 80px; height: 100px; font-size: 2.5rem; }
         }
     </style>
 </head>
 <body>
 
+    <div id="loader">Carregando jogo do Gabriel...</div>
+
     <header>
-        <h1 style="margin:0; font-size: 1.5rem;">Alfabeto do Gabriel</h1>
+        <div class="header-top">
+            <h1 id="game-title" style="margin:0; font-size: 1.5rem;">Gabriel - Nível 1</h1>
+            <select class="level-selector" id="level-select" onchange="jumpToLevel(this.value)">
+                <option value="1">Nível 1 (Maiúsculas - Desenhar)</option>
+                <option value="2">Nível 2 (Maiúsculas - Apagar)</option>
+                <option value="3">Nível 3 (Maiúsculas - Arrastar)</option>
+                <option value="4">Nível 4 (Minúsculas - Desenhar)</option>
+                <option value="5">Nível 5 (Minúsculas - Apagar)</option>
+                <option value="6">Nível 6 (Minúsculas - Arrastar)</option>
+            </select>
+        </div>
+        <div id="instruction-bar">Instrução</div>
     </header>
 
     <div class="game-container">
         <div class="card-side pop-in" id="card-side">
             <img src="" alt="" id="animal-image" class="animal-img">
-            <button class="btn btn-audio" onclick="speakCurrent()">
-                <i class="fas fa-volume-high"></i> Ouvir
+            <div id="audio-central-msg" style="display:none; font-size: 1.2rem; margin-bottom: 20px; text-align: center;">Ouça e arraste a letra!</div>
+            <button class="btn btn-audio" id="audio-btn" onclick="speakCurrent()">
+                <i class="fas fa-volume-high"></i>&nbsp;Ouvir
             </button>
         </div>
 
         <div class="drawing-side">
             <div id="canvas-container">
                 <canvas id="letter-canvas"></canvas>
-                <div id="congrats-overlay">
+                
+                <div id="congrats-overlay" class="overlay">
                     <div class="star-icon bounce">⭐</div>
-                    <h2 style="font-size: 2.5rem; color: var(--success-color); margin: 15px 0;">MUITO BEM!</h2>
+                    <h2 style="font-size: 2.2rem; color: var(--success-color); margin: 10px 0;">MUITO BEM!</h2>
+                </div>
+
+                <div id="level-complete-overlay" class="overlay">
+                    <div class="star-icon bounce">🏆</div>
+                    <h2 id="level-msg" style="font-size: 1.5rem; color: var(--primary-color); margin: 15px 0;">Parabéns Gabriel!</h2>
+                    <button class="btn btn-audio proeminent" style="width:100%; max-width: 250px; background-color: var(--success-color); border-radius: 50px;" onclick="startNextLevel()">
+                        Continuar <i class="fas fa-chevron-right"></i>
+                    </button>
                 </div>
             </div>
-            <div class="controls">
-                <button id="retry-btn" class="btn btn-retry" title="Limpar" onclick="resetCanvas()">
-                    <i class="fas fa-eraser"></i>
-                </button>
-                <button id="check-btn" class="btn btn-check" title="Conferir" onclick="manualCheck()">
-                    <i class="fas fa-check-circle"></i>
-                </button>
-                <button id="skip-btn" class="btn btn-skip" title="Pular" onclick="skipLetter()">
-                    <i class="fas fa-forward"></i>
-                </button>
+
+            <div id="drag-drop-container">
+                <div class="drop-zone" id="drop-zone">
+                    <i class="fas fa-question"></i>
+                </div>
+                <div class="options-container" id="options-container"></div>
+            </div>
+
+            <div class="controls" id="standard-controls">
+                <button id="retry-btn" class="btn btn-retry" onclick="resetCanvas()"><i class="fas fa-eraser"></i></button>
+                <button id="check-btn" class="btn btn-check" onclick="manualCheck()"><i class="fas fa-check-circle"></i></button>
+                <button id="skip-btn" class="btn btn-skip" onclick="skipLetter()"><i class="fas fa-forward"></i></button>
             </div>
         </div>
     </div>
 
-    <button id="next-btn" class="btn btn-next pop-in" onclick="nextLetter()">
-        Próximo <i class="fas fa-arrow-right"></i>
-    </button>
+    <button id="next-btn" class="btn btn-next pop-in" onclick="nextLetter()">Próximo <i class="fas fa-arrow-right"></i></button>
 
     <canvas id="ref-canvas" style="display:none;"></canvas>
 
     <script>
-        // Lista completa com acentuação correta para a fala
-        let alphabet = [
-            { l: 'A', name: 'Abelha' }, { l: 'B', name: 'Bola' }, { l: 'C', name: 'Casa' },
-            { l: 'D', name: 'Dado' }, { l: 'E', name: 'Elefante' }, { l: 'F', name: 'Faca' },
-            { l: 'G', name: 'Gato' }, { l: 'H', name: 'Helicóptero' }, { l: 'I', name: 'Igreja' },
-            { l: 'J', name: 'Jacaré' }, { l: 'K', name: 'Kiwi' }, { l: 'L', name: 'Lápis' },
-            { l: 'M', name: 'Macaco' }, { l: 'N', name: 'Navio' }, { l: 'O', name: 'Ovelha' },
-            { l: 'P', name: 'Pato' }, { l: 'Q', name: 'Queijo' }, { l: 'R', name: 'Rato' },
-            { l: 'S', name: 'Sapo' }, { l: 'T', name: 'Tesoura' }, { l: 'U', name: 'Uva' },
-            { l: 'V', name: 'Vaca' }, { l: 'W', name: 'Walter' }, { l: 'X', name: 'Xícara' },
-            { l: 'Y', name: 'Yakult' }, { l: 'Z', name: 'Zebra' }
-        ];
+        // --- CONFIGURAÇÃO FIREBASE ---
+        const firebaseConfig = JSON.parse(__firebase_config);
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'gabriel-alfabeto';
 
-        const preloadedImages = {};
-        let currentIndex = 0;
+        // --- ESTADO DO JOGO ---
+        let gameData = {
+            level: 1,
+            currentIndex: 0,
+            alphabet: [
+                { l: 'A', name: 'Abelha' }, { l: 'B', name: 'Bola' }, { l: 'C', name: 'Casa' },
+                { l: 'D', name: 'Dado' }, { l: 'E', name: 'Elefante' }, { l: 'F', name: 'Faca' },
+                { l: 'G', name: 'Gato' }, { l: 'H', name: 'Helicóptero' }, { l: 'I', name: 'Igreja' },
+                { l: 'J', name: 'Jacaré' }, { l: 'K', name: 'Kiwi' }, { l: 'L', name: 'Lápis' },
+                { l: 'M', name: 'Macaco' }, { l: 'N', name: 'Navio' }, { l: 'O', name: 'Ovelha' },
+                { l: 'P', name: 'Pato' }, { l: 'Q', name: 'Queijo' }, { l: 'R', name: 'Rato' },
+                { l: 'S', name: 'Sapo' }, { l: 'T', name: 'Tesoura' }, { l: 'U', name: 'Uva' },
+                { l: 'V', name: 'Vaca' }, { l: 'W', name: 'Walter' }, { l: 'X', name: 'Xícara' },
+                { l: 'Y', name: 'Yakult' }, { l: 'Z', name: 'Zebra' }
+            ]
+        };
+
         let attemptCount = 0;
-        const canvas = document.getElementById('letter-canvas');
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        const refCanvas = document.getElementById('ref-canvas');
-        const refCtx = refCanvas.getContext('2d', { willReadFrequently: true });
-        const canvasContainer = document.getElementById('canvas-container');
-        
         let isDrawing = false;
         let isCompleted = false;
         let hasStartedDrawing = false;
-        
-        const gridSize = 15; 
-        let targetBlocks = []; 
-        let visitedBlocks = new Set(); 
-        
-        const canvasSize = { w: 400, h: 400 }; 
+        let visitedBlocks = new Set();
+        let targetBlocks = [];
+        const gridSize = 15;
+        const canvasSize = { w: 400, h: 400 };
 
-        // Função auxiliar para remover acentos na hora de buscar o arquivo de imagem
-        function removeAccents(str) {
-            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        let canvas, ctx, refCanvas, refCtx;
+        const preloadedImages = {};
+
+        // --- PERSISTÊNCIA ---
+        async function saveProgress() {
+            const user = auth.currentUser;
+            if (!user) return;
+            try {
+                await db.doc(`artifacts/${appId}/users/${user.uid}/data/progress`).set({
+                    level: gameData.level,
+                    currentIndex: gameData.currentIndex,
+                    alphabet: gameData.alphabet,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch (e) { console.error("Erro ao salvar:", e); }
         }
 
+        async function loadProgress() {
+            const user = auth.currentUser;
+            if (!user) return;
+            try {
+                const doc = await db.doc(`artifacts/${appId}/users/${user.uid}/data/progress`).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    gameData.level = data.level || 1;
+                    gameData.currentIndex = data.currentIndex || 0;
+                    if (data.alphabet) gameData.alphabet = data.alphabet;
+                    document.getElementById('level-select').value = gameData.level;
+                }
+            } catch (e) { console.error("Erro ao carregar:", e); }
+        }
+
+        // --- LÓGICA DE JOGO ---
+        function removeAccents(str) { return str.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+
         function preloadAll() {
-            alphabet.forEach(item => {
+            gameData.alphabet.forEach(item => {
                 const img = new Image();
-                // O nome do arquivo no servidor está sem acento (ex: h_Helicoptero.jpg)
                 const imgName = `${item.l.toLowerCase()}_${removeAccents(item.name)}.jpg`;
                 img.src = `https://marciasiri.github.io/leitura_Gabriel/${imgName}`;
                 preloadedImages[item.l] = img;
             });
         }
 
-        document.fonts.ready.then(() => {
-            preloadAll();
-            initCanvas();
-            loadLetter(0);
-        });
-
         function initCanvas() {
+            canvas = document.getElementById('letter-canvas');
+            ctx = canvas.getContext('2d', { willReadFrequently: true });
+            refCanvas = document.getElementById('ref-canvas');
+            refCtx = refCanvas.getContext('2d', { willReadFrequently: true });
             canvas.width = canvasSize.w;
             canvas.height = canvasSize.h;
             refCanvas.width = canvasSize.w;
@@ -332,27 +374,33 @@
         }
 
         function renderLetterTemplate() {
+            if (!ctx || gameData.level === 3 || gameData.level === 6) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             refCtx.clearRect(0, 0, refCanvas.width, refCanvas.height);
             visitedBlocks.clear();
             targetBlocks = [];
             
-            const letter = alphabet[currentIndex].l;
-            const fontStyle = "bold 300px 'Fredoka One', sans-serif";
+            let letter = gameData.alphabet[gameData.currentIndex].l;
+            const isLowercaseLevel = [4, 5, 6].includes(gameData.level);
+            if (isLowercaseLevel) letter = letter.toLowerCase();
             
-            ctx.font = fontStyle;
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.strokeStyle = "#F0F0F0";
-            ctx.setLineDash([15, 15]);
-            ctx.lineWidth = 6;
-            ctx.strokeText(letter, canvas.width / 2, canvas.height / 2);
-            ctx.setLineDash([]);
+            const fontSize = isLowercaseLevel ? "340px" : "300px";
+            const guideFont = "bold " + fontSize + " sans-serif"; 
+            ctx.font = guideFont; ctx.textAlign = "center"; ctx.textBaseline = "middle";
 
-            refCtx.font = fontStyle;
-            refCtx.textAlign = "center";
-            refCtx.textBaseline = "middle";
-            refCtx.fillStyle = "black";
+            if (gameData.level === 1 || gameData.level === 4) {
+                ctx.strokeStyle = "#CCCCCC"; ctx.setLineDash([15, 15]); ctx.lineWidth = 6;
+                ctx.strokeText(letter, canvas.width / 2, canvas.height / 2);
+                ctx.setLineDash([]);
+            } else if (gameData.level === 2 || gameData.level === 5) {
+                ctx.font = "100 " + fontSize + " sans-serif"; 
+                ctx.fillStyle = "#CCCCCC";
+                ctx.fillText(letter, canvas.width / 2, canvas.height / 2);
+            }
+
+            refCtx.font = "bold " + fontSize + " sans-serif"; 
+            refCtx.textAlign = "center"; refCtx.textBaseline = "middle";
+            refCtx.fillStyle = "black"; 
             refCtx.fillText(letter, refCanvas.width / 2, refCanvas.height / 2);
 
             for (let y = 0; y < canvas.height; y += gridSize) {
@@ -360,10 +408,7 @@
                     const imgData = refCtx.getImageData(x, y, gridSize, gridSize);
                     let hasContent = false;
                     for (let i = 0; i < imgData.data.length; i += 4) {
-                        if (imgData.data[i + 3] > 50) {
-                            hasContent = true;
-                            break;
-                        }
+                        if (imgData.data[i + 3] > 50) { hasContent = true; break; }
                     }
                     if (hasContent) targetBlocks.push({ x, y });
                 }
@@ -371,157 +416,289 @@
         }
 
         function loadLetter(index) {
-            const item = alphabet[index];
+            const item = gameData.alphabet[index];
             document.getElementById('next-btn').style.display = 'none';
             document.getElementById('check-btn').style.display = 'none';
             document.getElementById('retry-btn').style.display = 'none';
             document.getElementById('skip-btn').style.display = 'none';
             document.getElementById('congrats-overlay').style.display = 'none';
+            document.getElementById('level-complete-overlay').style.display = 'none';
             
             isCompleted = false;
             hasStartedDrawing = false;
             attemptCount = 0;
             
-            const card = document.getElementById('card-side');
-            card.style.animation = 'none';
-            void card.offsetWidth; 
-            card.style.animation = 'pop 0.4s forwards';
+            document.getElementById('game-title').textContent = `Gabriel - Nível ${gameData.level}`;
+            document.body.className = `level-${gameData.level}`;
 
-            const preImg = preloadedImages[item.l];
-            if (preImg && preImg.complete) {
-                document.getElementById('animal-image').src = preImg.src;
+            let instruction = "";
+            switch(gameData.level) {
+                case 1: case 4: instruction = "Desenhe a letra!"; break;
+                case 2: case 5: instruction = "Apague a letra!"; break;
+                case 3: case 6: instruction = "Arraste a letra!"; break;
+            }
+            document.getElementById('instruction-bar').textContent = instruction;
+
+            if (gameData.level === 3 || gameData.level === 6) {
+                setupDragDropLevel(item);
             } else {
-                const imgName = `${item.l.toLowerCase()}_${removeAccents(item.name)}.jpg`;
-                document.getElementById('animal-image').src = `https://marciasiri.github.io/leitura_Gabriel/${imgName}`;
+                setupStandardLevels(item);
             }
 
-            renderLetterTemplate();
+            const card = document.getElementById('card-side');
+            card.style.animation = 'none'; void card.offsetWidth; card.style.animation = 'pop 0.4s forwards';
+
             setTimeout(() => speakCurrent(), 400);
         }
 
+        function setupStandardLevels(item) {
+            document.getElementById('canvas-container').style.display = 'flex';
+            document.getElementById('drag-drop-container').style.display = 'none';
+            document.getElementById('standard-controls').style.display = 'flex';
+            document.getElementById('animal-image').style.display = 'block';
+            document.getElementById('audio-central-msg').style.display = 'none';
+            
+            const preImg = preloadedImages[item.l];
+            document.getElementById('animal-image').src = (preImg && preImg.complete) ? preImg.src : `https://marciasiri.github.io/leitura_Gabriel/${item.l.toLowerCase()}_${removeAccents(item.name)}.jpg`;
+            
+            renderLetterTemplate();
+        }
+
+        function setupDragDropLevel(item) {
+            document.getElementById('canvas-container').style.display = 'none';
+            document.getElementById('drag-drop-container').style.display = 'flex';
+            document.getElementById('standard-controls').style.display = 'none';
+            document.getElementById('animal-image').style.display = 'none';
+            document.getElementById('audio-central-msg').style.display = 'block';
+
+            const isLowercase = gameData.level === 6;
+            const targetChar = isLowercase ? item.l.toLowerCase() : item.l;
+
+            const dropZone = document.getElementById('drop-zone');
+            dropZone.innerHTML = '<i class="fas fa-question"></i>';
+            dropZone.style.borderStyle = 'dashed';
+
+            const options = [targetChar];
+            const others = gameData.alphabet.filter(a => a.l !== item.l);
+            for (let i = 0; i < 2; i++) {
+                const rand = Math.floor(Math.random() * others.length);
+                const char = others.splice(rand, 1)[0].l;
+                options.push(isLowercase ? char.toLowerCase() : char);
+            }
+            options.sort(() => Math.random() - 0.5);
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            options.forEach(l => {
+                const card = document.createElement('div');
+                card.className = 'letter-card';
+                card.textContent = l;
+                card.draggable = true;
+                
+                card.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', l);
+                    card.classList.add('dragging');
+                });
+                card.addEventListener('dragend', () => card.classList.remove('dragging'));
+
+                let initialX, initialY;
+                card.addEventListener('touchstart', (e) => {
+                    const touch = e.touches[0];
+                    initialX = touch.clientX;
+                    initialY = touch.clientY;
+                    card.style.position = 'fixed';
+                    card.style.zIndex = '1000';
+                    card.classList.add('dragging');
+                });
+                
+                card.addEventListener('touchmove', (e) => {
+                    const touch = e.touches[0];
+                    card.style.left = (touch.clientX - 40) + 'px';
+                    card.style.top = (touch.clientY - 50) + 'px';
+                });
+
+                card.addEventListener('touchend', (e) => {
+                    card.classList.remove('dragging');
+                    const touch = e.changedTouches[0];
+                    const dzRect = dropZone.getBoundingClientRect();
+                    
+                    if (touch.clientX > dzRect.left && touch.clientX < dzRect.right &&
+                        touch.clientY > dzRect.top && touch.clientY < dzRect.bottom) {
+                        checkLevelDrop(l);
+                    } else {
+                        card.style.position = 'static';
+                    }
+                });
+
+                container.appendChild(card);
+            });
+        }
+
+        const dz = document.getElementById('drop-zone');
+        dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('hover'); });
+        dz.addEventListener('dragleave', () => dz.classList.remove('hover'));
+        dz.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dz.classList.remove('hover');
+            const dropped = e.dataTransfer.getData('text/plain');
+            checkLevelDrop(dropped);
+        });
+
+        function checkLevelDrop(letter) {
+            const item = gameData.alphabet[gameData.currentIndex];
+            const correct = (gameData.level === 6) ? item.l.toLowerCase() : item.l;
+            
+            if (letter === correct) {
+                const dropZone = document.getElementById('drop-zone');
+                dropZone.textContent = letter;
+                dropZone.style.borderStyle = 'solid';
+                showSuccess();
+            } else {
+                attemptCount++;
+                speak("Ops! Tente novamente!");
+                if (attemptCount >= 2) document.getElementById('skip-btn').style.display = 'flex';
+                dz.style.borderColor = 'red';
+                setTimeout(() => dz.style.borderColor = '', 500);
+            }
+        }
+
         function speakCurrent() {
-            const item = alphabet[currentIndex];
-            speak(item.l, () => {
-                setTimeout(() => {
-                    speak(item.name);
-                }, 500);
+            const item = gameData.alphabet[gameData.currentIndex];
+            let audioText = item.l;
+
+            // Pronuncia instrução APENAS para a letra A
+            if (item.l === 'A') {
+                let instructionSpeech = "";
+                switch(gameData.level) {
+                    case 1: case 4: instructionSpeech = "Desenhe a letra "; break;
+                    case 2: case 5: instructionSpeech = "Apague a letra "; break;
+                    case 3: case 6: instructionSpeech = "Arraste a letra "; break;
+                }
+                audioText = instructionSpeech + item.l;
+            }
+            
+            speak(audioText, () => {
+                setTimeout(() => speak(item.name), 500);
             });
         }
 
         function speak(text, callback) {
             window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'pt-BR';
-            utterance.rate = 1.4; 
-
+            utterance.lang = 'pt-BR'; utterance.rate = 1.4; 
             const voices = window.speechSynthesis.getVoices();
-            const feminineVoice = voices.find(v => 
-                v.lang.includes('pt-BR') && 
-                (v.name.includes('Maria') || v.name.includes('Luciana') || v.name.includes('Victoria') || v.name.includes('Google') || v.name.includes('Female'))
-            ) || voices.find(v => v.lang.includes('pt-BR'));
-
-            if (feminineVoice) utterance.voice = feminineVoice;
+            const fem = voices.find(v => v.lang.includes('pt-BR') && (v.name.includes('Maria') || v.name.includes('Luciana') || v.name.includes('Victoria'))) || voices.find(v => v.lang.includes('pt-BR'));
+            if (fem) utterance.voice = fem;
             if (callback) utterance.onend = callback;
-            
             window.speechSynthesis.speak(utterance);
         }
 
-        function startDrawing(e) {
-            if (isCompleted) return;
-            isDrawing = true;
-            
-            if (!hasStartedDrawing) {
-                hasStartedDrawing = true;
-                document.getElementById('check-btn').style.display = 'flex';
-                document.getElementById('retry-btn').style.display = 'flex';
-                if(attemptCount >= 2) document.getElementById('skip-btn').style.display = 'flex';
-            }
-
-            ctx.beginPath();
-            const pos = getMousePos(e);
-            ctx.moveTo(pos.x, pos.y);
-            markBlocks(pos.x, pos.y);
-        }
-
-        function draw(e) {
-            if (!isDrawing || isCompleted) return;
-            const pos = getMousePos(e);
-            ctx.lineTo(pos.x, pos.y);
-            ctx.strokeStyle = "#FF6B6B";
-            ctx.lineWidth = 45; 
-            ctx.lineCap = "round";
-            ctx.lineJoin = "round";
-            ctx.stroke();
-            markBlocks(pos.x, pos.y);
-        }
-
-        function markBlocks(x, y) {
-            targetBlocks.forEach((block, index) => {
-                if (!visitedBlocks.has(index)) {
-                    const dist = Math.hypot(x - (block.x + gridSize/2), y - (block.y + gridSize/2));
-                    if (dist < 35) visitedBlocks.add(index);
-                }
-            });
-        }
-
-        function stopDrawing() {
-            isDrawing = false;
-        }
-
         function manualCheck() {
-            if (isCompleted) return;
+            if (isCompleted || [3, 6].includes(gameData.level)) return;
             const percentage = (visitedBlocks.size / targetBlocks.length) * 100;
-            
-            if (percentage >= 65) {
+            const isErasing = [2, 5].includes(gameData.level);
+            const required = isErasing ? 80 : 65;
+
+            if (percentage >= required) {
                 showSuccess();
             } else {
                 attemptCount++;
                 speak("Quase, Gabriel! Tente novamente!");
-                canvasContainer.classList.add('blink-error');
-
+                document.getElementById('canvas-container').classList.add('blink-error');
                 setTimeout(() => {
-                    canvasContainer.classList.remove('blink-error');
+                    document.getElementById('canvas-container').classList.remove('blink-error');
                     resetCanvas(); 
                 }, 1000);
             }
         }
 
-        function skipLetter() {
-            const itemToSkip = alphabet.splice(currentIndex, 1)[0];
-            alphabet.push(itemToSkip);
-            if (currentIndex >= alphabet.length) currentIndex = 0;
-            loadLetter(currentIndex);
-            speak("Tudo bem! Vamos ver essa depois.");
-        }
-
         function showSuccess() {
             isCompleted = true;
-            document.getElementById('congrats-overlay').style.display = 'flex';
+            if (![3, 6].includes(gameData.level)) {
+                document.getElementById('congrats-overlay').style.display = 'flex';
+                speak("Muito bem! Você conseguiu!");
+            } else {
+                speak("Muito bem! Você acertou a letra!");
+            }
             document.getElementById('next-btn').style.display = 'block';
             document.getElementById('check-btn').style.display = 'none';
             document.getElementById('retry-btn').style.display = 'none';
             document.getElementById('skip-btn').style.display = 'none';
-            
-            for (let i = 0; i < 25; i++) {
+            createConfetti();
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 20; i++) {
                 const star = document.createElement('div');
-                star.className = 'confetti-star';
-                star.innerHTML = '⭐';
-                star.style.left = Math.random() * 100 + 'vw';
-                star.style.top = '-50px';
+                star.className = 'confetti-star'; star.innerHTML = '⭐';
+                star.style.left = Math.random() * 100 + 'vw'; star.style.top = '-50px';
                 star.style.animationDuration = (Math.random() * 1.5 + 1) + 's';
                 document.body.appendChild(star);
                 setTimeout(() => star.remove(), 2500);
             }
-            speak("Muito bem! Você conseguiu!");
         }
 
-        function getMousePos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+        function nextLetter() {
+            gameData.currentIndex++;
+            if (gameData.currentIndex < gameData.alphabet.length) {
+                saveProgress();
+                loadLetter(gameData.currentIndex);
+            } else {
+                showLevelComplete();
+            }
+        }
+
+        function skipLetter() {
+            const itemToSkip = gameData.alphabet.splice(gameData.currentIndex, 1)[0];
+            gameData.alphabet.push(itemToSkip);
+            if (gameData.currentIndex >= gameData.alphabet.length) gameData.currentIndex = 0;
+            saveProgress(); loadLetter(gameData.currentIndex);
+            speak("Tudo bem! Vamos ver essa depois.");
+        }
+
+        function showLevelComplete() {
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('canvas-container').style.display = 'flex';
+            document.getElementById('drag-drop-container').style.display = 'none';
+
+            const overlay = document.getElementById('level-complete-overlay');
+            overlay.style.display = 'flex';
+            
+            let msg = "";
+            switch(gameData.level) {
+                case 1: msg = "Parabéns! Nível 1 Concluído!"; break;
+                case 2: msg = "Incrível! Nível 2 Concluído!"; break;
+                case 3: msg = "Excelente! Nível 3 Concluído!"; break;
+                case 4: msg = "Ótimo! Nível 4 Concluído!"; break;
+                case 5: msg = "Fantástico! Nível 5 Concluído!"; break;
+                case 6: msg = "Uau! Gabriel, você é um mestre do Alfabeto!"; break;
+            }
+            
+            document.getElementById('level-msg').textContent = msg;
+            speak(msg);
+            createConfetti();
+        }
+
+        function startNextLevel() {
+            document.getElementById('level-complete-overlay').style.display = 'none';
+            if (gameData.level < 6) {
+                gameData.level++;
+            } else {
+                gameData.level = 1; 
+            }
+            document.getElementById('level-select').value = gameData.level;
+            gameData.currentIndex = 0;
+            gameData.alphabet.sort((a, b) => a.l.localeCompare(b.l));
+            saveProgress(); 
+            loadLetter(0);
+        }
+
+        function jumpToLevel(lvl) {
+            gameData.level = parseInt(lvl);
+            gameData.currentIndex = 0;
+            gameData.alphabet.sort((a, b) => a.l.localeCompare(b.l));
+            saveProgress();
+            loadLetter(0);
         }
 
         function resetCanvas() {
@@ -529,37 +706,79 @@
             document.getElementById('next-btn').style.display = 'none';
             document.getElementById('check-btn').style.display = 'none';
             document.getElementById('retry-btn').style.display = 'none';
-            
-            if (attemptCount < 2) {
-                document.getElementById('skip-btn').style.display = 'none';
-            } else {
-                document.getElementById('skip-btn').style.display = 'flex';
-            }
-            
+            document.getElementById('skip-btn').style.display = (attemptCount >= 2) ? 'flex' : 'none';
             document.getElementById('congrats-overlay').style.display = 'none';
-            isCompleted = false;
-            hasStartedDrawing = false;
+            isCompleted = false; hasStartedDrawing = false;
         }
 
-        function nextLetter() {
-            currentIndex++;
-            if (currentIndex < alphabet.length) {
-                loadLetter(currentIndex);
-            } else {
-                speak("Incrível! Você completou todas as letras!");
-                currentIndex = 0;
-                loadLetter(currentIndex);
+        function startDrawing(e) {
+            if (isCompleted || [3, 6].includes(gameData.level)) return;
+            isDrawing = true;
+            if (!hasStartedDrawing) {
+                hasStartedDrawing = true;
+                document.getElementById('check-btn').style.display = 'flex';
+                document.getElementById('retry-btn').style.display = 'flex';
+                if(attemptCount >= 2) document.getElementById('skip-btn').style.display = 'flex';
+            }
+            ctx.beginPath();
+            const pos = getMousePos(e);
+            ctx.moveTo(pos.x, pos.y);
+            markBlocks(pos.x, pos.y);
+        }
+
+        function draw(e) {
+            if (!isDrawing || isCompleted || [3, 6].includes(gameData.level)) return;
+            const pos = getMousePos(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.strokeStyle = ([2, 5].includes(gameData.level)) ? "white" : "#FF6B6B";
+            ctx.lineWidth = ([4, 5].includes(gameData.level)) ? 30 : 45; 
+            ctx.lineCap = "round"; ctx.lineJoin = "round";
+            ctx.stroke();
+            markBlocks(pos.x, pos.y);
+        }
+
+        function markBlocks(x, y) {
+            const threshold = ([4, 5].includes(gameData.level)) ? 25 : 35;
+            targetBlocks.forEach((block, index) => {
+                if (!visitedBlocks.has(index)) {
+                    const dist = Math.hypot(x - (block.x + gridSize/2), y - (block.y + gridSize/2));
+                    if (dist < threshold) visitedBlocks.add(index);
+                }
+            });
+        }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: (clientX - rect.left) * (canvas.width / rect.width), y: (clientY - rect.top) * (canvas.height / rect.height) };
+        }
+
+        async function init() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await auth.signInWithCustomToken(__initial_auth_token);
+                } else { await auth.signInAnonymously(); }
+                
+                initCanvas(); await loadProgress(); preloadAll();
+                
+                canvas.addEventListener('mousedown', startDrawing);
+                canvas.addEventListener('mousemove', draw);
+                window.addEventListener('mouseup', () => isDrawing = false);
+                canvas.addEventListener('touchstart', (e) => { if(![3, 6].includes(gameData.level)) e.preventDefault(); startDrawing(e); }, {passive: false});
+                canvas.addEventListener('touchmove', (e) => { if(![3, 6].includes(gameData.level)) e.preventDefault(); draw(e); }, {passive: false});
+                canvas.addEventListener('touchend', () => isDrawing = false);
+
+                loadLetter(gameData.currentIndex);
+                document.getElementById('loader').style.display = 'none';
+            } catch (e) {
+                console.error("Erro:", e);
+                document.getElementById('loader').textContent = "Erro ao conectar.";
             }
         }
 
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        window.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, {passive: false});
-        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive: false});
-        canvas.addEventListener('touchend', stopDrawing);
-
-        window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+        window.onload = init;
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
     </script>
 </body>
 </html>
