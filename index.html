@@ -120,6 +120,9 @@
             width: 180px; height: 180px; border-radius: 30px; display: flex;
             align-items: center; justify-content: center; font-size: 5rem;
             position: relative; transition: all 0.3s;
+            /* Forçar mesma fonte do desenho */
+            font-family: sans-serif;
+            font-weight: bold;
         }
         
         body.level-1 #canvas-container { border-color: var(--level-color-1); }
@@ -138,6 +141,9 @@
             border-radius: 20px; display: flex; align-items: center; justify-content: center;
             font-size: 3.5rem; cursor: grab; transition: transform 0.2s, box-shadow 0.2s;
             touch-action: none;
+            /* Forçar mesma fonte do desenho */
+            font-family: sans-serif;
+            font-weight: bold;
         }
         body.level-3 .letter-card { box-shadow: 5px 5px 0px var(--level-color-3); }
         body.level-6 .letter-card { box-shadow: 5px 5px 0px var(--level-color-6); }
@@ -303,8 +309,6 @@
         }
 
         // --- DEFINIÇÃO DE CAMINHO DE IMAGEM ---
-        // Altere para './' se as imagens estiverem na mesma pasta do HTML
-        // Ou './images/' se estiverem em uma subpasta
         const IMAGE_BASE_URL = './'; 
 
         // --- ESTADO DO JOGO ---
@@ -372,7 +376,6 @@
             gameData.alphabet.forEach(item => {
                 const img = new Image();
                 const imgName = `${item.l.toLowerCase()}_${removeAccents(item.name)}.jpg`;
-                // Usando caminho relativo para suporte offline
                 img.src = `${IMAGE_BASE_URL}${imgName}`;
                 preloadedImages[item.l] = img;
             });
@@ -478,7 +481,6 @@
             document.getElementById('audio-central-msg').style.display = 'none';
             
             const preImg = preloadedImages[item.l];
-            // Fallback para caminho relativo
             document.getElementById('animal-image').src = (preImg && preImg.complete) ? preImg.src : `${IMAGE_BASE_URL}${item.l.toLowerCase()}_${removeAccents(item.name)}.jpg`;
             
             renderLetterTemplate();
