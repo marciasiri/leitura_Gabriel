@@ -286,11 +286,16 @@
 
     <script>
         // --- CONFIGURAÇÃO FIREBASE ---
-        const firebaseConfig = JSON.parse(__firebase_config);
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'gabriel-alfabeto';
+        let db, auth, appId;
+        try {
+            const firebaseConfig = JSON.parse(__firebase_config);
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            auth = firebase.auth();
+            appId = typeof __app_id !== 'undefined' ? __app_id : 'gabriel-alfabeto';
+        } catch (e) {
+            console.error("Erro na configuração do Firebase:", e);
+        }
 
         // --- ESTADO DO JOGO ---
         let gameData = {
@@ -323,8 +328,8 @@
 
         // --- PERSISTÊNCIA ---
         async function saveProgress() {
+            if (!auth || !auth.currentUser) return;
             const user = auth.currentUser;
-            if (!user) return;
             try {
                 await db.doc(`artifacts/${appId}/users/${user.uid}/data/progress`).set({
                     level: gameData.level,
@@ -336,8 +341,8 @@
         }
 
         async function loadProgress() {
+            if (!auth || !auth.currentUser) return;
             const user = auth.currentUser;
-            if (!user) return;
             try {
                 const doc = await db.doc(`artifacts/${appId}/users/${user.uid}/data/progress`).get();
                 if (doc.exists) {
@@ -566,7 +571,6 @@
             const item = gameData.alphabet[gameData.currentIndex];
             let audioText = item.l;
 
-            // Pronuncia instrução APENAS para a letra A
             if (item.l === 'A') {
                 let instructionSpeech = "";
                 switch(gameData.level) {
@@ -583,6 +587,7 @@
         }
 
         function speak(text, callback) {
+            if (!window.speechSynthesis) return;
             window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'pt-BR'; utterance.rate = 1.4; 
@@ -755,12 +760,28 @@
         }
 
         async function init() {
+            // Timer de segurança: se o Firebase demorar mais de 4s, inicia o jogo offline
+            const safetyTimeout = setTimeout(() => {
+                if (document.getElementById('loader').style.display !== 'none') {
+                    console.warn("Firebase demorou demais. Iniciando modo offline.");
+                    initCanvas();
+                    loadLetter(gameData.currentIndex);
+                    document.getElementById('loader').style.display = 'none';
+                }
+            }, 4000);
+
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await auth.signInWithCustomToken(__initial_auth_token);
-                } else { await auth.signInAnonymously(); }
+                if (auth) {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await auth.signInWithCustomToken(__initial_auth_token);
+                    } else { 
+                        await auth.signInAnonymously(); 
+                    }
+                    await loadProgress();
+                }
                 
-                initCanvas(); await loadProgress(); preloadAll();
+                initCanvas();
+                preloadAll();
                 
                 canvas.addEventListener('mousedown', startDrawing);
                 canvas.addEventListener('mousemove', draw);
@@ -769,11 +790,16 @@
                 canvas.addEventListener('touchmove', (e) => { if(![3, 6].includes(gameData.level)) e.preventDefault(); draw(e); }, {passive: false});
                 canvas.addEventListener('touchend', () => isDrawing = false);
 
+                clearTimeout(safetyTimeout);
                 loadLetter(gameData.currentIndex);
                 document.getElementById('loader').style.display = 'none';
             } catch (e) {
-                console.error("Erro:", e);
-                document.getElementById('loader').textContent = "Erro ao conectar.";
+                console.error("Erro na inicialização:", e);
+                clearTimeout(safetyTimeout);
+                // Inicia o jogo mesmo se o Firebase falhar
+                initCanvas();
+                loadLetter(gameData.currentIndex);
+                document.getElementById('loader').style.display = 'none';
             }
         }
 
